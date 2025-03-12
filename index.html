@@ -3,88 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Calendario ICS desde Horario</title>
+    <title>Generador de Calendario ICS desde PDF</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .container { max-width: 800px; margin: auto; }
-        textarea { width: 100%; height: 200px; margin: 10px 0; }
+        input[type="file"] { margin: 10px 0; }
         button { padding: 10px 20px; background-color: #007BFF; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #0056b3; }
+        #log { margin-top: 20px; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Subir Horario y Generar Calendario ICS</h2>
-        <p>Pega el contenido extraído del PDF (como el texto OCR) en el área de texto a continuación:</p>
-        <textarea id="pdfContent" placeholder="Pega aquí el contenido del PDF..."></textarea>
-        <button onclick="generateICS()">Generar y Descargar Calendario ICS</button>
+        <h2>Subir PDF y Generar Calendario ICS</h2>
+        <p>Sube un archivo PDF con el horario de la tripulación:</p>
+        <input type="file" id="pdfUpload" accept="application/pdf">
+        <button onclick="generateICSFromPDF()">Generar y Descargar Calendario ICS</button>
+        <div id="log"></div>
     </div>
 
+    <!-- Cargar pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
-        function generateICS() {
-            const content = document.getElementById('pdfContent').value;
-            if (!content) {
-                alert('Por favor, pega el contenido del PDF.');
+        // Configurar pdf.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        async function generateICSFromPDF() {
+            const pdfInput = document.getElementById('pdfUpload');
+            const log = document.getElementById('log');
+            if (!pdfInput.files.length) {
+                log.innerText = 'Por favor, sube un archivo PDF.';
                 return;
             }
 
-            // Extraer mes y año del encabezado
-            const monthYearMatch = content.match(/(\d{1,2}-\d{1,2}-\d{4})\s*to\s*(\d{1,2}-\d{1,2}-\d{4})/);
-            if (!monthYearMatch) {
-                alert('No se pudo encontrar el rango de fechas (ej. 1-3-2025 to 31-3-2025).');
-                return;
-            }
-            const [startDateStr, endDateStr] = monthYearMatch.slice(1);
-            const [startDay, startMonth, startYear] = startDateStr.split('-').map(Number);
-            const [endDay, endMonth, endYear] = endDateStr.split('-').map(Number);
+            const file = pdfInput.files[0];
+            const fileReader = new FileReader();
 
-            // Extraer líneas de la tabla de vuelos
-            const lines = content.split('\n').map(line => line.trim()).filter(line => line);
-            const flightData = [];
-            let currentDate = null;
+            fileReader.onload = async function() {
+                const typedarray = new Uint8Array(this.result);
+                try {
+                    // Cargar el PDF
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    const page = await pdf.getPage(1); // Suponemos que los datos están en la primera página
+                    const textContent = await page.getTextContent();
+                    const textItems = textContent.items;
+                    let fullText = '';
 
-            lines.forEach(line => {
-                // Detectar fecha
-                const dateMatch = line.match(/(\d{2})\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/);
-                if (dateMatch) {
-                    currentDate = parseInt(dateMatch[1], 10);
-                    return;
-                }
-
-                // Extraer datos de vuelo
-                const flightMatch = line.match(/(\d{2}:\d{2})\s+(\d{3})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
-                if (flightMatch && currentDate) {
-                    const [, repTime, flightNo, depStation, depTime, arrStation, arrTime, duration] = flightMatch;
-                    flightData.push({
-                        date: currentDate,
-                        month: startMonth,
-                        year: startYear,
-                        repTime,
-                        flightNo,
-                        depStation,
-                        depTime,
-                        arrStation,
-                        arrTime,
-                        duration
+                    // Extraer texto
+                    textItems.forEach(item => {
+                        fullText += item.str + '\n';
                     });
-                }
-            });
 
-            // Generar contenido ICS
-            let icsContent = `BEGIN:VCALENDAR
+                    log.innerText = 'Texto extraído:\n' + fullText;
+
+                    // Procesar el texto extraído
+                    const monthYearMatch = fullText.match(/(\d{1,2}-\d{1,2}-\d{4})\s*to\s*(\d{1,2}-\d{1,2}-\d{4})/);
+                    if (!monthYearMatch) {
+                        log.innerText += '\nNo se pudo encontrar el rango de fechas.';
+                        return;
+                    }
+                    const [startDateStr, endDateStr] = monthYearMatch.slice(1);
+                    const [startDay, startMonth, startYear] = startDateStr.split('-').map(Number);
+                    const [endDay, endMonth, endYear] = endDateStr.split('-').map(Number);
+
+                    // Extraer líneas de la tabla de vuelos
+                    const lines = fullText.split('\n').map(line => line.trim()).filter(line => line);
+                    const flightData = [];
+                    let currentDate = null;
+
+                    lines.forEach(line => {
+                        // Detectar fecha
+                        const dateMatch = line.match(/(\d{2})\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/);
+                        if (dateMatch) {
+                            currentDate = parseInt(dateMatch[1], 10);
+                            return;
+                        }
+
+                        // Extraer datos de vuelo
+                        const flightMatch = line.match(/(\d{2}:\d{2})\s+(\d{3})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
+                        if (flightMatch && currentDate) {
+                            const [, repTime, flightNo, depStation, depTime, arrStation, arrTime, duration] = flightMatch;
+                            flightData.push({
+                                date: currentDate,
+                                month: startMonth,
+                                year: startYear,
+                                repTime,
+                                flightNo,
+                                depStation,
+                                depTime,
+                                arrStation,
+                                arrTime,
+                                duration
+                            });
+                        }
+                    });
+
+                    // Generar contenido ICS
+                    let icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//xAI Grok 3//NONSGML v1.0//ES
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 `;
 
-            flightData.forEach(flight => {
-                const startDateTime = new Date(flight.year, flight.month - 1, flight.date, 
-                    parseInt(flight.depTime.split(':')[0]), parseInt(flight.depTime.split(':')[1])).toISOString().replace(/Z$/, '');
-                const endDateTime = new Date(flight.year, flight.month - 1, flight.date, 
-                    parseInt(flight.arrTime.split(':')[0]), parseInt(flight.arrTime.split(':')[1])).toISOString().replace(/Z$/, '');
+                    flightData.forEach(flight => {
+                        const startDateTime = new Date(flight.year, flight.month - 1, flight.date, 
+                            parseInt(flight.depTime.split(':')[0]), parseInt(flight.depTime.split(':')[1])).toISOString().replace(/Z$/, '');
+                        const endDateTime = new Date(flight.year, flight.month - 1, flight.date, 
+                            parseInt(flight.arrTime.split(':')[0]), parseInt(flight.arrTime.split(':')[1])).toISOString().replace(/Z$/, '');
 
-                icsContent += `BEGIN:VEVENT
+                        icsContent += `BEGIN:VEVENT
 UID:${flight.flightNo}-${startDateTime}@xai.com
 DTSTAMP:${new Date().toISOString().replace(/.\d{3}Z$/, '')}
 DTSTART:${startDateTime}
@@ -94,20 +122,27 @@ DESCRIPTION:Reporte: ${flight.repTime}\nDuración: ${flight.duration}\nTripulaci
 LOCATION:${flight.depStation} - ${flight.arrStation}
 END:VEVENT
 `;
-            });
+                    });
 
-            icsContent += `END:VCALENDAR`;
+                    icsContent += `END:VCALENDAR`;
 
-            // Descargar archivo ICS
-            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `roster_${startYear}_${startMonth}.ics`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                    // Descargar archivo ICS
+                    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `roster_${startYear}_${startMonth}.ics`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    log.innerText += '\nArchivo ICS generado y descargado.';
+                } catch (error) {
+                    log.innerText = 'Error al procesar el PDF: ' + error.message;
+                }
+            };
+
+            fileReader.readAsArrayBuffer(file);
         }
     </script>
 </body>
