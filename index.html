@@ -29,7 +29,7 @@
         async function generateICSFromPDF() {
             const pdfInput = document.getElementById('pdfUpload');
             const log = document.getElementById('log');
-            log.innerText = ''; // Limpiar el log
+            log.innerText = '';
 
             if (!pdfInput.files.length) {
                 log.innerText = 'Por favor, sube un archivo PDF.';
@@ -56,14 +56,25 @@
                     // Extraer mes y año
                     const monthYearMatch = fullText.match(/(\d{1,2}-\d{1,2}-\d{4})\s*to\s*(\d{1,2}-\d{1,2}-\d{4})/);
                     if (!monthYearMatch) {
-                        log.innerText += '\nError: No se pudo encontrar el rango de fechas (ejemplo: 1-3-2025 to 31-3-2025).';
+                        log.innerText += '\nError: No se pudo encontrar el rango de fechas.';
                         return;
                     }
                     const [startDateStr, endDateStr] = monthYearMatch.slice(1);
                     const [startDay, startMonth, startYear] = startDateStr.split('-').map(Number);
                     log.innerText += `\nRango detectado: ${startYear}-${startMonth}-${startDay} a ${endDateStr}`;
 
-                    // Extraer datos de vuelos
+                    // Extraer calendario mensual (días Off y códigos de vuelo)
+                    const calendarMatch = fullText.match(/\|\s*01\s*\|.*?\n\s*\|.*?\n\s*\|/s);
+                    let monthlySchedule = [];
+                    if (calendarMatch) {
+                        const calendarLines = calendarMatch[0].split('\n').filter(line => line.includes('|'));
+                        monthlySchedule = calendarLines[0].split('|').slice(1, 32).map(item => item.trim());
+                        log.innerText += '\nCalendario mensual extraído (días 1-31):\n' + monthlySchedule.join(', ');
+                    } else {
+                        log.innerText += '\nAdvertencia: No se encontró el calendario mensual.';
+                    }
+
+                    // Extraer detalles de vuelos
                     const lines = fullText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
                     const flightData = [];
                     let currentDate = null;
@@ -92,15 +103,37 @@
                         }
                     });
 
+                    log.innerText += '\nDatos de vuelos extraídos:';
                     if (flightData.length === 0) {
-                        log.innerText += '\nError: No se encontraron datos de vuelos en el texto extraído. Verifica el formato del PDF.';
-                        return;
+                        log.innerText += '\nNingún vuelo encontrado.';
+                    } else {
+                        flightData.forEach(fd => {
+                            log.innerText += `\n- Día ${fd.date}: Vuelo ${fd.flightNo}, ${fd.depStation}(${fd.depTime}) -> ${fd.arrStation}(${fd.arrTime})`;
+                        });
                     }
 
-                    log.innerText += '\nDatos de vuelos extraídos:';
-                    flightData.forEach(fd => {
-                        log.innerText += `\n- Fecha: ${fd.year}-${fd.month}-${fd.date}, Vuelo: ${fd.flightNo}, ${fd.depStation}(${fd.depTime}) -> ${fd.arrStation}(${fd.arrTime})`;
+                    // Generar eventos para días Off
+                    const offDays = [];
+                    monthlySchedule.forEach((entry, index) => {
+                        if (entry === 'xx') {
+                            offDays.push({
+                                date: index + 1,
+                                month: startMonth,
+                                year: startYear,
+                                type: 'Off'
+                            });
+                        }
                     });
+
+                    log.innerText += '\nDías Off extraídos:';
+                    offDays.forEach(off => {
+                        log.innerText += `\n- Día ${off.date}: Libre`;
+                    });
+
+                    if (flightData.length === 0 && offDays.length === 0) {
+                        log.innerText += '\nError: No se encontraron ni vuelos ni días Off.';
+                        return;
+                    }
 
                     // Generar contenido ICS
                     let icsContent = `BEGIN:VCALENDAR
@@ -110,13 +143,13 @@ CALSCALE:GREGORIAN
 METHOD:PUBLISH
 `;
 
+                    // Eventos para vuelos
                     flightData.forEach(flight => {
                         const startDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
                             parseInt(flight.depTime.split(':')[0]), parseInt(flight.depTime.split(':')[1])));
                         let endDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
                             parseInt(flight.arrTime.split(':')[0]), parseInt(flight.arrTime.split(':')[1])));
 
-                        // Ajustar si el vuelo termina al día siguiente
                         if (endDate < startDate) {
                             endDate.setUTCDate(endDate.getUTCDate() + 1);
                         }
@@ -133,6 +166,26 @@ DTEND:${endDateStr}
 SUMMARY:Vuelo ${flight.flightNo} (${flight.depStation} a ${flight.arrStation})
 DESCRIPTION:Reporte: ${flight.repTime}\\nDuración: ${flight.duration}\\nTripulación: Adria Casanovas Pozo
 LOCATION:${flight.depStation} - ${flight.arrStation}
+END:VEVENT
+`;
+                    });
+
+                    // Eventos para días Off
+                    offDays.forEach(off => {
+                        const startDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 0, 0));
+                        const endDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 23, 59));
+                        const startDateStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                        const endDateStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                        const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+                        icsContent += `BEGIN:VEVENT
+UID:OFF-${off.date}-${startDateStr}@xai.com
+DTSTAMP:${dtstamp}
+DTSTART:${startDateStr}
+DTEND:${endDateStr}
+SUMMARY:Día Libre
+DESCRIPTION:Día de descanso\\nTripulación: Adria Casanovas Pozo
+LOCATION:No asignado
 END:VEVENT
 `;
                     });
