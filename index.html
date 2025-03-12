@@ -10,7 +10,7 @@
         input[type="file"] { margin: 10px 0; }
         button { padding: 10px 20px; background-color: #007BFF; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #0056b3; }
-        #log { margin-top: 20px; white-space: pre-wrap; }
+        #log { margin-top: 20px; white-space: pre-wrap; color: #333; }
     </style>
 </head>
 <body>
@@ -22,10 +22,8 @@
         <div id="log"></div>
     </div>
 
-    <!-- Cargar pdf.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
-        // Configurar pdf.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
         async function generateICSFromPDF() {
@@ -42,21 +40,18 @@
             fileReader.onload = async function() {
                 const typedarray = new Uint8Array(this.result);
                 try {
-                    // Cargar el PDF
                     const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                    const page = await pdf.getPage(1); // Suponemos que los datos están en la primera página
+                    const page = await pdf.getPage(1);
                     const textContent = await page.getTextContent();
-                    const textItems = textContent.items;
                     let fullText = '';
 
-                    // Extraer texto
-                    textItems.forEach(item => {
+                    textContent.items.forEach(item => {
                         fullText += item.str + '\n';
                     });
 
                     log.innerText = 'Texto extraído:\n' + fullText;
 
-                    // Procesar el texto extraído
+                    // Extraer mes y año
                     const monthYearMatch = fullText.match(/(\d{1,2}-\d{1,2}-\d{4})\s*to\s*(\d{1,2}-\d{1,2}-\d{4})/);
                     if (!monthYearMatch) {
                         log.innerText += '\nNo se pudo encontrar el rango de fechas.';
@@ -64,22 +59,20 @@
                     }
                     const [startDateStr, endDateStr] = monthYearMatch.slice(1);
                     const [startDay, startMonth, startYear] = startDateStr.split('-').map(Number);
-                    const [endDay, endMonth, endYear] = endDateStr.split('-').map(Number);
+                    log.innerText += `\nRango detectado: ${startYear}-${startMonth}-${startDay} a ${endDateStr}`;
 
-                    // Extraer líneas de la tabla de vuelos
+                    // Extraer datos de vuelos
                     const lines = fullText.split('\n').map(line => line.trim()).filter(line => line);
                     const flightData = [];
                     let currentDate = null;
 
                     lines.forEach(line => {
-                        // Detectar fecha
                         const dateMatch = line.match(/(\d{2})\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/);
                         if (dateMatch) {
                             currentDate = parseInt(dateMatch[1], 10);
                             return;
                         }
 
-                        // Extraer datos de vuelo
                         const flightMatch = line.match(/(\d{2}:\d{2})\s+(\d{3})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
                         if (flightMatch && currentDate) {
                             const [, repTime, flightNo, depStation, depTime, arrStation, arrTime, duration] = flightMatch;
@@ -91,11 +84,15 @@
                                 flightNo,
                                 depStation,
                                 depTime,
-                                arrStation,
                                 arrTime,
                                 duration
                             });
                         }
+                    });
+
+                    log.innerText += '\nDatos de vuelos extraídos:';
+                    flightData.forEach(fd => {
+                        log.innerText += `\n- Fecha: ${fd.year}-${fd.month}-${fd.date}, Vuelo: ${fd.flightNo}, ${fd.depStation}(${fd.depTime}) -> ${fd.arrStation}(${fd.arrTime})`;
                     });
 
                     // Generar contenido ICS
@@ -107,16 +104,20 @@ METHOD:PUBLISH
 `;
 
                     flightData.forEach(flight => {
-                        const startDateTime = new Date(flight.year, flight.month - 1, flight.date, 
-                            parseInt(flight.depTime.split(':')[0]), parseInt(flight.depTime.split(':')[1])).toISOString().replace(/Z$/, '');
-                        const endDateTime = new Date(flight.year, flight.month - 1, flight.date, 
-                            parseInt(flight.arrTime.split(':')[0]), parseInt(flight.arrTime.split(':')[1])).toISOString().replace(/Z$/, '');
+                        // Convertir a formato UTC
+                        const startDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
+                            parseInt(flight.depTime.split(':')[0]), parseInt(flight.depTime.split(':')[1])));
+                        const endDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
+                            parseInt(flight.arrTime.split(':')[0]), parseInt(flight.arrTime.split(':')[1])));
+
+                        const startDateStr = startDate.toISOString().replace(/.\d{3}Z$/, 'Z');
+                        const endDateStr = endDate.toISOString().replace(/.\d{3}Z$/, 'Z');
 
                         icsContent += `BEGIN:VEVENT
-UID:${flight.flightNo}-${startDateTime}@xai.com
-DTSTAMP:${new Date().toISOString().replace(/.\d{3}Z$/, '')}
-DTSTART:${startDateTime}
-DTEND:${endDateTime}
+UID:${flight.flightNo}-${startDateStr}@xai.com
+DTSTAMP:${new Date().toISOString().replace(/.\d{3}Z$/, 'Z')}
+DTSTART:${startDateStr.replace(/-|:|.\d{3}/g, '')}
+DTEND:${endDateStr.replace(/-|:|.\d{3}/g, '')}
 SUMMARY:Vuelo ${flight.flightNo} (${flight.depStation} a ${flight.arrStation})
 DESCRIPTION:Reporte: ${flight.repTime}\nDuración: ${flight.duration}\nTripulación: Adria Casanovas Pozo
 LOCATION:${flight.depStation} - ${flight.arrStation}
@@ -128,15 +129,15 @@ END:VEVENT
 
                     // Descargar archivo ICS
                     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                    const link = document.createElement('a');
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', `roster_${startYear}_${startMonth}.ics`);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    log.innerText += '\nArchivo ICS generado y descargado.';
+                    const link = document.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = link;
+                    a.download = `roster_${startYear}_${startMonth}.ics`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(link);
+                    log.innerText += '\nArchivo ICS generado y descargado. Revisa los datos extraídos para confirmar.';
                 } catch (error) {
                     log.innerText = 'Error al procesar el PDF: ' + error.message;
                 }
