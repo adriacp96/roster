@@ -48,34 +48,41 @@
                     let fullText = '';
 
                     textContent.items.forEach(item => {
-                        fullText += item.str + '\n';
+                        fullText += item.str + ' ';
                     });
+                    fullText = fullText.replace(/\s+/g, ' ').trim(); // Normalizar espacios
 
-                    log.innerText = 'Texto extraído del PDF:\n' + fullText;
+                    log.innerText = 'Texto extraído del PDF (normalizado):\n' + fullText;
 
                     // Extraer mes y año
                     const monthYearMatch = fullText.match(/(\d{1,2}-\d{1,2}-\d{4})\s*to\s*(\d{1,2}-\d{1,2}-\d{4})/);
+                    let startYear, startMonth;
                     if (!monthYearMatch) {
-                        log.innerText += '\nError: No se pudo encontrar el rango de fechas.';
-                        return;
-                    }
-                    const [startDateStr, endDateStr] = monthYearMatch.slice(1);
-                    const [startDay, startMonth, startYear] = startDateStr.split('-').map(Number);
-                    log.innerText += `\nRango detectado: ${startYear}-${startMonth}-${startDay} a ${endDateStr}`;
-
-                    // Extraer calendario mensual (días Off y códigos de vuelo)
-                    const calendarMatch = fullText.match(/\|\s*01\s*\|.*?\n\s*\|.*?\n\s*\|/s);
-                    let monthlySchedule = [];
-                    if (calendarMatch) {
-                        const calendarLines = calendarMatch[0].split('\n').filter(line => line.includes('|'));
-                        monthlySchedule = calendarLines[0].split('|').slice(1, 32).map(item => item.trim());
-                        log.innerText += '\nCalendario mensual extraído (días 1-31):\n' + monthlySchedule.join(', ');
+                        log.innerText += '\nAdvertencia: No se encontró el rango de fechas. Usando marzo 2025 por defecto.';
+                        startYear = 2025;
+                        startMonth = 3;
                     } else {
-                        log.innerText += '\nAdvertencia: No se encontró el calendario mensual.';
+                        const [startDateStr] = monthYearMatch.slice(1);
+                        [, startMonth, startYear] = startDateStr.split('-').map(Number);
+                        log.innerText += `\nRango detectado: ${startYear}-${startMonth}`;
+                    }
+
+                    // Extraer calendario mensual (días 1-31)
+                    const calendarMatch = fullText.match(/\|\s*01\s*\|.*?\|.*?\|/s);
+                    let monthlySchedule = Array(31).fill('');
+                    if (calendarMatch) {
+                        const calendarText = calendarMatch[0];
+                        const calendarLines = calendarText.split('|').map(item => item.trim());
+                        for (let i = 1; i <= 31 && i < calendarLines.length - 1; i++) {
+                            monthlySchedule[i - 1] = calendarLines[i];
+                        }
+                        log.innerText += '\nCalendario mensual (días 1-31):\n' + monthlySchedule.join(', ');
+                    } else {
+                        log.innerText += '\nAdvertencia: No se encontró la tabla mensual.';
                     }
 
                     // Extraer detalles de vuelos
-                    const lines = fullText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                    const lines = fullText.split(/(?=\d{2}\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun))/).filter(line => line.trim());
                     const flightData = [];
                     let currentDate = null;
 
@@ -112,7 +119,7 @@
                         });
                     }
 
-                    // Generar eventos para días Off
+                    // Extraer días Off
                     const offDays = [];
                     monthlySchedule.forEach((entry, index) => {
                         if (entry === 'xx') {
@@ -126,16 +133,15 @@
                     });
 
                     log.innerText += '\nDías Off extraídos:';
-                    offDays.forEach(off => {
-                        log.innerText += `\n- Día ${off.date}: Libre`;
-                    });
-
-                    if (flightData.length === 0 && offDays.length === 0) {
-                        log.innerText += '\nError: No se encontraron ni vuelos ni días Off.';
-                        return;
+                    if (offDays.length === 0) {
+                        log.innerText += '\nNingún día Off encontrado.';
+                    } else {
+                        offDays.forEach(off => {
+                            log.innerText += `\n- Día ${off.date}: Libre`;
+                        });
                     }
 
-                    // Generar contenido ICS
+                    // Generar contenido ICS incluso si no hay vuelos
                     let icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//xAI Grok 3//NONSGML v1.0//ES
@@ -192,6 +198,7 @@ END:VEVENT
 
                     icsContent += `END:VCALENDAR`;
 
+                    // Mostrar el contenido ICS generado
                     log.innerText += '\nContenido del archivo ICS generado:\n' + icsContent;
 
                     // Descargar archivo ICS
