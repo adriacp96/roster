@@ -110,14 +110,14 @@ METHOD:PUBLISH
                         const endDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
                             parseInt(flight.arrTime.split(':')[0]), parseInt(flight.arrTime.split(':')[1])));
 
-                        const startDateStr = startDate.toISOString().replace(/.\d{3}Z$/, 'Z');
-                        const endDateStr = endDate.toISOString().replace(/.\d{3}Z$/, 'Z');
+                        const startDateStr = startDate.toISOString().replace(/-|:|\.\d{3}/g, '');
+                        const endDateStr = endDate.toISOString().replace(/-|:|\.\d{3}/g, '');
 
                         icsContent += `BEGIN:VEVENT
 UID:${flight.flightNo}-${startDateStr}@xai.com
-DTSTAMP:${new Date().toISOString().replace(/.\d{3}Z$/, 'Z')}
-DTSTART:${startDateStr.replace(/-|:|.\d{3}/g, '')}
-DTEND:${endDateStr.replace(/-|:|.\d{3}/g, '')}
+DTSTAMP:${new Date().toISOString().replace(/-|:|\.\d{3}/g, '')}Z
+DTSTART:${startDateStr}Z
+DTEND:${endDateStr}Z
 SUMMARY:Vuelo ${flight.flightNo} (${flight.depStation} a ${flight.arrStation})
 DESCRIPTION:Reporte: ${flight.repTime}\nDuración: ${flight.duration}\nTripulación: Adria Casanovas Pozo
 LOCATION:${flight.depStation} - ${flight.arrStation}
@@ -129,14 +129,15 @@ END:VEVENT
 
                     // Descargar archivo ICS
                     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                    const link = document.createObjectURL(blob);
+                    const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.href = link;
+                    a.href = url;
                     a.download = `roster_${startYear}_${startMonth}.ics`;
+                    a.style.display = 'none';
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
-                    URL.revokeObjectURL(link);
+                    URL.revokeObjectURL(url);
                     log.innerText += '\nArchivo ICS generado y descargado. Revisa los datos extraídos para confirmar.';
                 } catch (error) {
                     log.innerText = 'Error al procesar el PDF: ' + error.message;
