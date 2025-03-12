@@ -50,7 +50,7 @@
                     textContent.items.forEach(item => {
                         fullText += item.str + ' ';
                     });
-                    fullText = fullText.replace(/\s+/g, ' ').trim(); // Normalizar espacios
+                    fullText = fullText.replace(/\s+/g, ' ').trim();
 
                     log.innerText = 'Texto extraído del PDF (normalizado):\n' + fullText;
 
@@ -67,30 +67,50 @@
                         log.innerText += `\nRango detectado: ${startYear}-${startMonth}`;
                     }
 
-                    // Extraer calendario mensual (días 1-31)
+                    // Extraer calendario mensual
                     const calendarMatch = fullText.match(/\|\s*01\s*\|.*?\|.*?\|/s);
                     let monthlySchedule = Array(31).fill('');
                     if (calendarMatch) {
                         const calendarText = calendarMatch[0];
-                        const calendarLines = calendarText.split('|').map(item => item.trim());
-                        for (let i = 1; i <= 31 && i < calendarLines.length - 1; i++) {
-                            monthlySchedule[i - 1] = calendarLines[i];
+                        const calendarItems = calendarText.split('|').map(item => item.trim());
+                        for (let i = 1; i <= 31 && i < calendarItems.length - 1; i++) {
+                            monthlySchedule[i - 1] = calendarItems[i];
                         }
                         log.innerText += '\nCalendario mensual (días 1-31):\n' + monthlySchedule.join(', ');
                     } else {
-                        log.innerText += '\nAdvertencia: No se encontró la tabla mensual.';
+                        log.innerText += '\nError: No se encontró la tabla mensual. Verifica el PDF.';
+                    }
+
+                    // Extraer días Off
+                    const offDays = [];
+                    monthlySchedule.forEach((entry, index) => {
+                        if (entry === 'xx') {
+                            offDays.push({
+                                date: index + 1,
+                                month: startMonth,
+                                year: startYear,
+                                type: 'Off'
+                            });
+                        }
+                    });
+
+                    log.innerText += '\nDías Off extraídos:';
+                    if (offDays.length === 0) {
+                        log.innerText += '\nNingún día Off encontrado.';
+                    } else {
+                        offDays.forEach(off => {
+                            log.innerText += `\n- Día ${off.date}: Libre`;
+                        });
                     }
 
                     // Extraer detalles de vuelos
                     const lines = fullText.split(/(?=\d{2}\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun))/).filter(line => line.trim());
                     const flightData = [];
-                    let currentDate = null;
 
                     lines.forEach(line => {
                         const dateMatch = line.match(/(\d{2})\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/);
                         if (dateMatch) {
                             currentDate = parseInt(dateMatch[1], 10);
-                            return;
                         }
 
                         const flightMatch = line.match(/(\d{2}:\d{2})\s+(\d{3})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
@@ -119,35 +139,35 @@
                         });
                     }
 
-                    // Extraer días Off
-                    const offDays = [];
-                    monthlySchedule.forEach((entry, index) => {
-                        if (entry === 'xx') {
-                            offDays.push({
-                                date: index + 1,
-                                month: startMonth,
-                                year: startYear,
-                                type: 'Off'
-                            });
-                        }
-                    });
-
-                    log.innerText += '\nDías Off extraídos:';
-                    if (offDays.length === 0) {
-                        log.innerText += '\nNingún día Off encontrado.';
-                    } else {
-                        offDays.forEach(off => {
-                            log.innerText += `\n- Día ${off.date}: Libre`;
-                        });
-                    }
-
-                    // Generar contenido ICS incluso si no hay vuelos
+                    // Generar contenido ICS
                     let icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//xAI Grok 3//NONSGML v1.0//ES
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
+X-WR-CALNAME:Horario Tripulación ${startYear}-${startMonth}
 `;
+
+                    // Eventos para días Off
+                    offDays.forEach(off => {
+                        const startDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 0, 0));
+                        const endDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 23, 59));
+                        const startDateStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                        const endDateStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                        const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+                        icsContent += `BEGIN:VEVENT
+UID:OFF-${off.date}-${startDateStr}@xai.com
+DTSTAMP:${dtstamp}
+DTSTART:${startDateStr}
+DTEND:${endDateStr}
+SUMMARY:Día Libre
+DESCRIPTION:Día de descanso\\nTripulación: Adria Casanovas Pozo
+LOCATION:No asignado
+STATUS:CONFIRMED
+END:VEVENT
+`;
+                    });
 
                     // Eventos para vuelos
                     flightData.forEach(flight => {
@@ -172,33 +192,13 @@ DTEND:${endDateStr}
 SUMMARY:Vuelo ${flight.flightNo} (${flight.depStation} a ${flight.arrStation})
 DESCRIPTION:Reporte: ${flight.repTime}\\nDuración: ${flight.duration}\\nTripulación: Adria Casanovas Pozo
 LOCATION:${flight.depStation} - ${flight.arrStation}
-END:VEVENT
-`;
-                    });
-
-                    // Eventos para días Off
-                    offDays.forEach(off => {
-                        const startDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 0, 0));
-                        const endDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 23, 59));
-                        const startDateStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                        const endDateStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                        const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-                        icsContent += `BEGIN:VEVENT
-UID:OFF-${off.date}-${startDateStr}@xai.com
-DTSTAMP:${dtstamp}
-DTSTART:${startDateStr}
-DTEND:${endDateStr}
-SUMMARY:Día Libre
-DESCRIPTION:Día de descanso\\nTripulación: Adria Casanovas Pozo
-LOCATION:No asignado
+STATUS:CONFIRMED
 END:VEVENT
 `;
                     });
 
                     icsContent += `END:VCALENDAR`;
 
-                    // Mostrar el contenido ICS generado
                     log.innerText += '\nContenido del archivo ICS generado:\n' + icsContent;
 
                     // Descargar archivo ICS
@@ -213,7 +213,7 @@ END:VEVENT
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
 
-                    log.innerText += '\nArchivo ICS descargado con éxito.';
+                    log.innerText += '\nArchivo ICS descargado. Si no ves eventos, revisa el contenido arriba.';
                 } catch (error) {
                     log.innerText = 'Error al procesar el PDF: ' + error.message;
                 }
