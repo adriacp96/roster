@@ -16,6 +16,18 @@
         .file-input-container {
             margin-bottom: 20px;
         }
+        #downloadLink {
+            display: none;
+            margin-top: 10px;
+        }
+        #debugOutput {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -27,6 +39,8 @@
             <button id="parseButton" class="btn btn-primary mt-2" disabled>Parsear y Generar Calendario</button>
         </div>
         <div id="calendar"></div>
+        <a id="downloadLink" class="btn btn-success" href="#" download="roster.ics">Descargar Calendario ICS</a>
+        <div id="debugOutput"></div>
     </div>
 
     <!-- Incluir FullCalendar JS y dependencias -->
@@ -48,6 +62,8 @@
 
             var fileInput = document.getElementById('rosterFile');
             var parseButton = document.getElementById('parseButton');
+            var downloadLink = document.getElementById('downloadLink');
+            var debugOutput = document.getElementById('debugOutput');
 
             fileInput.addEventListener('change', function() {
                 parseButton.disabled = !fileInput.files.length;
@@ -59,9 +75,31 @@
                     var reader = new FileReader();
                     reader.onload = function(e) {
                         var htmlContent = e.target.result;
-                        var events = parseRosterHtml(htmlContent);
-                        calendar.removeAllEvents();
-                        calendar.addEventSource(events);
+                        debugOutput.style.display = 'block';
+                        debugOutput.innerHTML = 'Procesando archivo...<br>';
+                        var { events, icsContent } = parseRosterHtml(htmlContent);
+                        if (events.length > 0) {
+                            calendar.removeAllEvents();
+                            calendar.addEventSource(events);
+                            debugOutput.innerHTML += `Se encontraron ${events.length} eventos.<br>`;
+                        } else {
+                            debugOutput.innerHTML += 'No se encontraron eventos en la tabla roster.<br>';
+                        }
+
+                        // Generar y configurar el enlace de descarga ICS
+                        if (icsContent) {
+                            var blob = new Blob([icsContent], { type: 'text/calendar' });
+                            downloadLink.href = URL.createObjectURL(blob);
+                            downloadLink.download = 'roster_2025-03.ics';
+                            downloadLink.style.display = 'block';
+                            debugOutput.innerHTML += 'Archivo ICS generado y listo para descargar.<br>';
+                        } else {
+                            debugOutput.innerHTML += 'No se pudo generar el archivo ICS.<br>';
+                        }
+                    };
+                    reader.onerror = function() {
+                        debugOutput.style.display = 'block';
+                        debugOutput.innerHTML = 'Error al leer el archivo.<br>';
                     };
                     reader.readAsText(file);
                 } else {
@@ -71,62 +109,86 @@
 
             function parseRosterHtml(htmlContent) {
                 var events = [];
+                var icsEvents = [];
                 var parser = new DOMParser();
                 var doc = parser.parseFromString(htmlContent, 'text/html');
                 var rosterTable = doc.querySelector('table.roster');
+                debugOutput.innerHTML += `Tabla roster encontrada: ${rosterTable ? 'Sí' : 'No'}<br>`;
 
                 if (rosterTable) {
-                    var rows = rosterTable.querySelectorAll('tbody tr');
+                    var rows = rosterTable.querySelectorAll('tr');
                     var currentDate = null;
                     var currentFlights = [];
 
-                    rows.forEach(row => {
-                        var cols = row.querySelectorAll('td');
+                    rows.forEach((row, index) => {
+                        var cols = row.querySelectorAll('td, th');
                         if (cols.length > 0) {
-                            var dateCell = cols[0].textContent.trim().match(/(\d{2})\s+[A-Za-z]{3}/);
+                            debugOutput.innerHTML += `Procesando fila ${index}: ${cols.length} columnas<br>`;
+                            var dateCell = Array.from(cols).find(col => col.textContent.trim().match(/(\d{1,2})\s+[A-Za-z]{3}/));
                             if (dateCell) {
-                                // Nueva fecha encontrada, procesar vuelos anteriores
-                                if (currentDate && currentFlights.length > 0) {
-                                    events.push(createEventFromFlights(currentDate, currentFlights));
+                                var dateMatch = dateCell.textContent.trim().match(/(\d{1,2})\s+[A-Za-z]{3}/);
+                                if (dateMatch) {
+                                    // Procesar vuelos anteriores
+                                    if (currentDate && currentFlights.length > 0) {
+                                        var event = createEventFromFlights(currentDate, currentFlights);
+                                        events.push(event);
+                                        icsEvents.push(createICSEvent(currentDate, currentFlights));
+                                        debugOutput.innerHTML += `Evento creado para ${currentDate}<br>`;
+                                    }
+                                    currentDate = dateMatch[1];
+                                    currentFlights = [];
                                 }
-                                currentDate = dateCell[1];
-                                currentFlights = [];
                             }
 
-                            // Extraer detalles de vuelo si hay múltiples columnas
+                            // Extraer detalles de vuelo
                             if (cols.length >= 6) {
-                                var repTime = cols[1].textContent.trim() || '';
-                                var flightNo = cols[2].textContent.trim() || '';
-                                var fromStation = cols[3].textContent.trim() || '';
-                                var fromTime = cols[4].textContent.trim() || '';
-                                var toStation = cols[5].textContent.trim() || '';
-                                var toTime = cols[6].textContent.trim() || '';
-                                var duration = cols[7] ? cols[7].textContent.trim() : '';
+                                var flightData = Array.from(cols).slice(1).map(col => col.textContent.trim());
+                                var repTime = flightData[0] || '';
+                                var flightNo = flightData[1] || '';
+                                var fromStation = flightData[2] || '';
+                                var fromTime = flightData[3] || '';
+                                var toStation = flightData[4] || '';
+                                var toTime = flightData[5] || '';
+                                var duration = flightData[6] || '';
 
                                 if (flightNo) {
                                     currentFlights.push({
                                         repTime, flightNo, fromStation, fromTime, toStation, toTime, duration
                                     });
+                                    debugOutput.innerHTML += `Vuelo añadido: ${flightNo} (${fromStation} -> ${toStation})<br>`;
                                 }
-                            } else if (cols.length === 1 && cols[0].textContent.trim() === 'xx') {
+                            } else if (cols.length === 1 && cols[0].textContent.trim().toLowerCase() === 'xx') {
                                 // Día libre
+                                var eventDate = `2025-03-${currentDate.padStart(2, '0')}`;
                                 events.push({
                                     title: 'Día libre',
-                                    start: `2025-03-${currentDate.padStart(2, '0')}`,
+                                    start: eventDate,
                                     extendedProps: { details: 'Sin asignación' },
                                     color: '#28a745'
                                 });
+                                icsEvents.push(createICSFreeDay(eventDate));
+                                debugOutput.innerHTML += `Día libre añadido para ${currentDate}<br>`;
                             }
                         }
                     });
 
                     // Procesar el último día
                     if (currentDate && currentFlights.length > 0) {
-                        events.push(createEventFromFlights(currentDate, currentFlights));
+                        var event = createEventFromFlights(currentDate, currentFlights);
+                        events.push(event);
+                        icsEvents.push(createICSEvent(currentDate, currentFlights));
+                        debugOutput.innerHTML += `Evento final creado para ${currentDate}<br>`;
                     }
                 }
 
-                return events;
+                // Generar contenido ICS
+                var icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//xAI Grok 3//Cabin Crew Roster//EN
+${icsEvents.join('\n')}
+END:VCALENDAR`;
+
+                return { events, icsContent };
             }
 
             function createEventFromFlights(date, flights) {
@@ -137,6 +199,44 @@
                     extendedProps: { details: details },
                     color: '#007bff'
                 };
+            }
+
+            function createICSEvent(date, flights) {
+                var startDate = new Date(`2025-03-${date.padStart(2, '0')} ${flights[0].repTime || '00:00'}`);
+                var duration = flights.reduce((total, f) => total + parseDuration(f.duration), 0);
+                var endDate = new Date(startDate.getTime() + duration * 60 * 60 * 1000);
+
+                var details = flights.map(f => `${f.flightNo}: ${f.fromStation} (${f.fromTime}) -> ${f.toStation} (${f.toTime}), Dur: ${f.duration}h`).join('\\n');
+                return `BEGIN:VEVENT
+UID:${Date.now()}-${date}@xai.com
+DTSTAMP:${formatICSDate(new Date())}
+DTSTART:${formatICSDate(startDate)}
+DTEND:${formatICSDate(endDate)}
+SUMMARY:Vuelo(s) ${flights[0].flightNo}
+DESCRIPTION:${details}
+END:VEVENT`;
+            }
+
+            function createICSFreeDay(date) {
+                var startDate = new Date(date);
+                var endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+                return `BEGIN:VEVENT
+UID:${Date.now()}-${date}@xai.com
+DTSTAMP:${formatICSDate(new Date())}
+DTSTART:${formatICSDate(startDate)}
+DTEND:${formatICSDate(endDate)}
+SUMMARY:Día libre
+DESCRIPTION:Sin asignación
+END:VEVENT`;
+            }
+
+            function parseDuration(durationStr) {
+                var [hours] = durationStr.split(':').map(Number) || [0];
+                return hours || 0;
+            }
+
+            function formatICSDate(date) {
+                return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
             }
         });
     </script>
