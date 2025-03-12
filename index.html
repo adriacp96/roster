@@ -16,7 +16,7 @@
 <body>
     <div class="container">
         <h2>Subir PDF y Generar Calendario ICS</h2>
-        <p>Sube un archivo PDF con el horario de la tripulación:</p>
+        <p>Sube un archivo PDF con el horario de la tripulación (hora de Dubái):</p>
         <input type="file" id="pdfUpload" accept="application/pdf">
         <button onclick="generateICSFromPDF()">Generar y Descargar Calendario ICS</button>
         <div id="log"></div>
@@ -25,6 +25,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        function formatDateForICS(date) {
+            // Convertir a formato ICS: YYYYMMDDTHHMMSS
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            const hours = String(date.getUTCHours()).padStart(2, '0');
+            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+            return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+        }
 
         async function generateICSFromPDF() {
             const pdfInput = document.getElementById('pdfUpload');
@@ -78,7 +89,7 @@
                         }
                         log.innerText += '\nCalendario mensual (días 1-31):\n' + monthlySchedule.join(', ');
                     } else {
-                        log.innerText += '\nError: No se encontró la tabla mensual. Verifica el PDF.';
+                        log.innerText += '\nAdvertencia: No se encontró la tabla mensual.';
                     }
 
                     // Extraer días Off
@@ -106,6 +117,7 @@
                     // Extraer detalles de vuelos
                     const lines = fullText.split(/(?=\d{2}\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun))/).filter(line => line.trim());
                     const flightData = [];
+                    let currentDate = null;
 
                     lines.forEach(line => {
                         const dateMatch = line.match(/(\d{2})\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/);
@@ -146,53 +158,67 @@ PRODID:-//xAI Grok 3//NONSGML v1.0//ES
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 X-WR-CALNAME:Horario Tripulación ${startYear}-${startMonth}
+X-WR-TIMEZONE:Asia/Dubai
+BEGIN:VTIMEZONE
+TZID:Asia/Dubai
+BEGIN:STANDARD
+TZOFFSETFROM:+0400
+TZOFFSETTO:+0400
+TZNAME:GST
+DTSTART:19700101T000000
+END:STANDARD
+END:VTIMEZONE
 `;
 
                     // Eventos para días Off
                     offDays.forEach(off => {
-                        const startDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 0, 0));
-                        const endDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 23, 59));
-                        const startDateStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                        const endDateStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                        const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                        // Hora local de Dubái (UTC+4)
+                        const startDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 0 - 4, 0)); // 00:00 Dubái
+                        const endDate = new Date(Date.UTC(off.year, off.month - 1, off.date, 23 - 4, 59));  // 23:59 Dubái
+                        const startDateStr = formatDateForICS(startDate);
+                        const endDateStr = formatDateForICS(endDate);
+                        const dtstamp = formatDateForICS(new Date());
 
                         icsContent += `BEGIN:VEVENT
 UID:OFF-${off.date}-${startDateStr}@xai.com
 DTSTAMP:${dtstamp}
-DTSTART:${startDateStr}
-DTEND:${endDateStr}
+DTSTART;TZID=Asia/Dubai:${startDateStr}
+DTEND;TZID=Asia/Dubai:${endDateStr}
 SUMMARY:Día Libre
 DESCRIPTION:Día de descanso\\nTripulación: Adria Casanovas Pozo
 LOCATION:No asignado
 STATUS:CONFIRMED
+TRANSP:TRANSPARENT
 END:VEVENT
 `;
                     });
 
                     // Eventos para vuelos
                     flightData.forEach(flight => {
+                        // Hora local de Dubái (UTC+4)
                         const startDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
-                            parseInt(flight.depTime.split(':')[0]), parseInt(flight.depTime.split(':')[1])));
+                            parseInt(flight.depTime.split(':')[0]) - 4, parseInt(flight.depTime.split(':')[1])));
                         let endDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
-                            parseInt(flight.arrTime.split(':')[0]), parseInt(flight.arrTime.split(':')[1])));
+                            parseInt(flight.arrTime.split(':')[0]) - 4, parseInt(flight.arrTime.split(':')[1])));
 
                         if (endDate < startDate) {
                             endDate.setUTCDate(endDate.getUTCDate() + 1);
                         }
 
-                        const startDateStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                        const endDateStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-                        const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                        const startDateStr = formatDateForICS(startDate);
+                        const endDateStr = formatDateForICS(endDate);
+                        const dtstamp = formatDateForICS(new Date());
 
                         icsContent += `BEGIN:VEVENT
 UID:${flight.flightNo}-${startDateStr}@xai.com
 DTSTAMP:${dtstamp}
-DTSTART:${startDateStr}
-DTEND:${endDateStr}
+DTSTART;TZID=Asia/Dubai:${startDateStr}
+DTEND;TZID=Asia/Dubai:${endDateStr}
 SUMMARY:Vuelo ${flight.flightNo} (${flight.depStation} a ${flight.arrStation})
 DESCRIPTION:Reporte: ${flight.repTime}\\nDuración: ${flight.duration}\\nTripulación: Adria Casanovas Pozo
 LOCATION:${flight.depStation} - ${flight.arrStation}
 STATUS:CONFIRMED
+TRANSP:OPAQUE
 END:VEVENT
 `;
                     });
