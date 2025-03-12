@@ -29,6 +29,8 @@
         async function generateICSFromPDF() {
             const pdfInput = document.getElementById('pdfUpload');
             const log = document.getElementById('log');
+            log.innerText = ''; // Limpiar el log
+
             if (!pdfInput.files.length) {
                 log.innerText = 'Por favor, sube un archivo PDF.';
                 return;
@@ -49,12 +51,12 @@
                         fullText += item.str + '\n';
                     });
 
-                    log.innerText = 'Texto extraído:\n' + fullText;
+                    log.innerText = 'Texto extraído del PDF:\n' + fullText;
 
                     // Extraer mes y año
                     const monthYearMatch = fullText.match(/(\d{1,2}-\d{1,2}-\d{4})\s*to\s*(\d{1,2}-\d{1,2}-\d{4})/);
                     if (!monthYearMatch) {
-                        log.innerText += '\nNo se pudo encontrar el rango de fechas.';
+                        log.innerText += '\nError: No se pudo encontrar el rango de fechas (ejemplo: 1-3-2025 to 31-3-2025).';
                         return;
                     }
                     const [startDateStr, endDateStr] = monthYearMatch.slice(1);
@@ -73,7 +75,6 @@
                             return;
                         }
 
-                        // Ajuste para capturar mejor las líneas de vuelo
                         const flightMatch = line.match(/(\d{2}:\d{2})\s+(\d{3})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
                         if (flightMatch && currentDate) {
                             const [, repTime, flightNo, depStation, depTime, arrStation, arrTime, duration] = flightMatch;
@@ -92,7 +93,7 @@
                     });
 
                     if (flightData.length === 0) {
-                        log.innerText += '\nError: No se encontraron datos de vuelos en el texto extraído.';
+                        log.innerText += '\nError: No se encontraron datos de vuelos en el texto extraído. Verifica el formato del PDF.';
                         return;
                     }
 
@@ -112,8 +113,13 @@ METHOD:PUBLISH
                     flightData.forEach(flight => {
                         const startDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
                             parseInt(flight.depTime.split(':')[0]), parseInt(flight.depTime.split(':')[1])));
-                        const endDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
+                        let endDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
                             parseInt(flight.arrTime.split(':')[0]), parseInt(flight.arrTime.split(':')[1])));
+
+                        // Ajustar si el vuelo termina al día siguiente
+                        if (endDate < startDate) {
+                            endDate.setUTCDate(endDate.getUTCDate() + 1);
+                        }
 
                         const startDateStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
                         const endDateStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -125,7 +131,7 @@ DTSTAMP:${dtstamp}
 DTSTART:${startDateStr}
 DTEND:${endDateStr}
 SUMMARY:Vuelo ${flight.flightNo} (${flight.depStation} a ${flight.arrStation})
-DESCRIPTION:Reporte: ${flight.repTime}\nDuración: ${flight.duration}\nTripulación: Adria Casanovas Pozo
+DESCRIPTION:Reporte: ${flight.repTime}\\nDuración: ${flight.duration}\\nTripulación: Adria Casanovas Pozo
 LOCATION:${flight.depStation} - ${flight.arrStation}
 END:VEVENT
 `;
@@ -133,12 +139,28 @@ END:VEVENT
 
                     icsContent += `END:VCALENDAR`;
 
-                    // Mostrar el contenido ICS en el log para depuración
-                    log.innerText += '\nContenido del archivo ICS:\n' + icsContent;
+                    log.innerText += '\nContenido del archivo ICS generado:\n' + icsContent;
 
                     // Descargar archivo ICS
                     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `roster_${startYear​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
+                    a.download = `roster_${startYear}_${startMonth}.ics`;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    log.innerText += '\nArchivo ICS descargado con éxito.';
+                } catch (error) {
+                    log.innerText = 'Error al procesar el PDF: ' + error.message;
+                }
+            };
+
+            fileReader.readAsArrayBuffer(file);
+        }
+    </script>
+</body>
+</html>
