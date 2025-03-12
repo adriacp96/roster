@@ -62,7 +62,7 @@
                     log.innerText += `\nRango detectado: ${startYear}-${startMonth}-${startDay} a ${endDateStr}`;
 
                     // Extraer datos de vuelos
-                    const lines = fullText.split('\n').map(line => line.trim()).filter(line => line);
+                    const lines = fullText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
                     const flightData = [];
                     let currentDate = null;
 
@@ -73,6 +73,7 @@
                             return;
                         }
 
+                        // Ajuste para capturar mejor las líneas de vuelo
                         const flightMatch = line.match(/(\d{2}:\d{2})\s+(\d{3})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\w{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
                         if (flightMatch && currentDate) {
                             const [, repTime, flightNo, depStation, depTime, arrStation, arrTime, duration] = flightMatch;
@@ -90,6 +91,11 @@
                         }
                     });
 
+                    if (flightData.length === 0) {
+                        log.innerText += '\nError: No se encontraron datos de vuelos en el texto extraído.';
+                        return;
+                    }
+
                     log.innerText += '\nDatos de vuelos extraídos:';
                     flightData.forEach(fd => {
                         log.innerText += `\n- Fecha: ${fd.year}-${fd.month}-${fd.date}, Vuelo: ${fd.flightNo}, ${fd.depStation}(${fd.depTime}) -> ${fd.arrStation}(${fd.arrTime})`;
@@ -104,20 +110,20 @@ METHOD:PUBLISH
 `;
 
                     flightData.forEach(flight => {
-                        // Convertir a formato UTC
                         const startDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
                             parseInt(flight.depTime.split(':')[0]), parseInt(flight.depTime.split(':')[1])));
                         const endDate = new Date(Date.UTC(flight.year, flight.month - 1, flight.date, 
                             parseInt(flight.arrTime.split(':')[0]), parseInt(flight.arrTime.split(':')[1])));
 
-                        const startDateStr = startDate.toISOString().replace(/-|:|\.\d{3}/g, '');
-                        const endDateStr = endDate.toISOString().replace(/-|:|\.\d{3}/g, '');
+                        const startDateStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                        const endDateStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                        const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
                         icsContent += `BEGIN:VEVENT
 UID:${flight.flightNo}-${startDateStr}@xai.com
-DTSTAMP:${new Date().toISOString().replace(/-|:|\.\d{3}/g, '')}Z
-DTSTART:${startDateStr}Z
-DTEND:${endDateStr}Z
+DTSTAMP:${dtstamp}
+DTSTART:${startDateStr}
+DTEND:${endDateStr}
 SUMMARY:Vuelo ${flight.flightNo} (${flight.depStation} a ${flight.arrStation})
 DESCRIPTION:Reporte: ${flight.repTime}\nDuración: ${flight.duration}\nTripulación: Adria Casanovas Pozo
 LOCATION:${flight.depStation} - ${flight.arrStation}
@@ -127,25 +133,12 @@ END:VEVENT
 
                     icsContent += `END:VCALENDAR`;
 
+                    // Mostrar el contenido ICS en el log para depuración
+                    log.innerText += '\nContenido del archivo ICS:\n' + icsContent;
+
                     // Descargar archivo ICS
                     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `roster_${startYear}_${startMonth}.ics`;
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    log.innerText += '\nArchivo ICS generado y descargado. Revisa los datos extraídos para confirmar.';
-                } catch (error) {
-                    log.innerText = 'Error al procesar el PDF: ' + error.message;
-                }
-            };
-
-            fileReader.readAsArrayBuffer(file);
-        }
-    </script>
-</body>
-</html>
+                    a.download = `roster_${startYear​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
