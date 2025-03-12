@@ -13,9 +13,7 @@
             max-width: 900px;
             margin: 20px auto;
         }
-        #rosterInput {
-            width: 100%;
-            height: 400px;
+        .file-input-container {
             margin-bottom: 20px;
         }
     </style>
@@ -23,9 +21,11 @@
 <body>
     <div class="container">
         <h1 class="mt-4">Convertir Horario de Cabin Crew a Calendario</h1>
-        <p>Pega el contenido OCR del roster aquí:</p>
-        <textarea id="rosterInput" class="form-control" placeholder="Pega el contenido OCR del roster aquí..."></textarea>
-        <button id="parseButton" class="btn btn-primary mt-2">Parsear y Generar Calendario</button>
+        <div class="file-input-container">
+            <label for="rosterFile" class="form-label">Selecciona un archivo HTML del roster:</label>
+            <input type="file" class="form-control" id="rosterFile" accept=".html,.htm">
+            <button id="parseButton" class="btn btn-primary mt-2" disabled>Parsear y Generar Calendario</button>
+        </div>
         <div id="calendar"></div>
     </div>
 
@@ -46,74 +46,84 @@
             });
             calendar.render();
 
-            document.getElementById('parseButton').addEventListener('click', function() {
-                var rosterText = document.getElementById('rosterInput').value;
-                if (rosterText) {
-                    var events = parseRosterText(rosterText);
-                    calendar.removeAllEvents();
-                    calendar.addEventSource(events);
+            var fileInput = document.getElementById('rosterFile');
+            var parseButton = document.getElementById('parseButton');
+
+            fileInput.addEventListener('change', function() {
+                parseButton.disabled = !fileInput.files.length;
+            });
+
+            parseButton.addEventListener('click', function() {
+                var file = fileInput.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        var htmlContent = e.target.result;
+                        var events = parseRosterHtml(htmlContent);
+                        calendar.removeAllEvents();
+                        calendar.addEventSource(events);
+                    };
+                    reader.readAsText(file);
                 } else {
-                    alert('Por favor, pega el contenido del roster.');
+                    alert('Por favor, selecciona un archivo.');
                 }
             });
 
-            function parseRosterText(text) {
+            function parseRosterHtml(htmlContent) {
                 var events = [];
-                var lines = text.split('\n');
-                var inDetailsTable = false;
-                var currentDate = null;
-                var currentFlights = [];
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(htmlContent, 'text/html');
+                var rosterTable = doc.querySelector('table.roster');
 
-                lines.forEach(line => {
-                    line = line.trim();
-                    if (line.startsWith('| Date')) {
-                        inDetailsTable = true;
-                    } else if (inDetailsTable && line.match(/^\|\s*\d{2}\s+[A-Za-z]{3}/)) {
-                        // Nueva fila de detalles (ej. "01 Sat")
-                        if (currentDate && currentFlights.length > 0) {
-                            events.push(createEventFromFlights(currentDate, currentFlights));
+                if (rosterTable) {
+                    var rows = rosterTable.querySelectorAll('tbody tr');
+                    var currentDate = null;
+                    var currentFlights = [];
+
+                    rows.forEach(row => {
+                        var cols = row.querySelectorAll('td');
+                        if (cols.length > 0) {
+                            var dateCell = cols[0].textContent.trim().match(/(\d{2})\s+[A-Za-z]{3}/);
+                            if (dateCell) {
+                                // Nueva fecha encontrada, procesar vuelos anteriores
+                                if (currentDate && currentFlights.length > 0) {
+                                    events.push(createEventFromFlights(currentDate, currentFlights));
+                                }
+                                currentDate = dateCell[1];
+                                currentFlights = [];
+                            }
+
+                            // Extraer detalles de vuelo si hay múltiples columnas
+                            if (cols.length >= 6) {
+                                var repTime = cols[1].textContent.trim() || '';
+                                var flightNo = cols[2].textContent.trim() || '';
+                                var fromStation = cols[3].textContent.trim() || '';
+                                var fromTime = cols[4].textContent.trim() || '';
+                                var toStation = cols[5].textContent.trim() || '';
+                                var toTime = cols[6].textContent.trim() || '';
+                                var duration = cols[7] ? cols[7].textContent.trim() : '';
+
+                                if (flightNo) {
+                                    currentFlights.push({
+                                        repTime, flightNo, fromStation, fromTime, toStation, toTime, duration
+                                    });
+                                }
+                            } else if (cols.length === 1 && cols[0].textContent.trim() === 'xx') {
+                                // Día libre
+                                events.push({
+                                    title: 'Día libre',
+                                    start: `2025-03-${currentDate.padStart(2, '0')}`,
+                                    extendedProps: { details: 'Sin asignación' },
+                                    color: '#28a745'
+                                });
+                            }
                         }
-                        currentDate = line.match(/^\|\s*(\d{2})\s+[A-Za-z]{3}/)[1];
-                        currentFlights = [];
-                    } else if (inDetailsTable && line.match(/^\|\s*[0-9:]{4,5}\s*[A-Za-z0-9]{3}\s*/)) {
-                        // Línea de vuelo (ej. "06:50 837 DXB 08:21 BAH 08:40 01:19")
-                        var parts = line.split('|').map(p => p.trim()).filter(p => p);
-                        if (parts.length >= 6) {
-                            var repTime = parts[1] || '';
-                            var flightNo = parts[2] || '';
-                            var fromStation = parts[3] || '';
-                            var fromTime = parts[4] || '';
-                            var toStation = parts[5] || '';
-                            var toTime = parts[6] || '';
-                            var duration = parts[7] || '';
-                            currentFlights.push({
-                                repTime, flightNo, fromStation, fromTime, toStation, toTime, duration
-                            });
-                        }
-                    } else if (line.match(/^\|\s*(\d{2})\s*$/)) {
-                        // Día de la vista mensual compacta (ej. "| 01 |")
-                        var day = line.match(/^\|\s*(\d{2})\s*\|/)[1];
-                        var type = line.match(/\|\s*(\w+)\s*\|/) ? line.match(/\|\s*(\w+)\s*\|/)[1] : 'xx';
-                        if (type !== 'xx') {
-                            events.push({
-                                title: `Turno ${type}`,
-                                start: `2025-03-${day.padStart(2, '0')}`,
-                                extendedProps: { details: 'Ver detalles de vuelo' }
-                            });
-                        } else {
-                            events.push({
-                                title: 'Día libre',
-                                start: `2025-03-${day.padStart(2, '0')}`,
-                                extendedProps: { details: 'Sin asignación' },
-                                color: '#28a745' // Verde para días libres
-                            });
-                        }
+                    });
+
+                    // Procesar el último día
+                    if (currentDate && currentFlights.length > 0) {
+                        events.push(createEventFromFlights(currentDate, currentFlights));
                     }
-                });
-
-                // Procesar el último día
-                if (currentDate && currentFlights.length > 0) {
-                    events.push(createEventFromFlights(currentDate, currentFlights));
                 }
 
                 return events;
@@ -125,7 +135,7 @@
                     title: `Vuelo(s) ${flights[0].flightNo}`,
                     start: `2025-03-${date.padStart(2, '0')}`,
                     extendedProps: { details: details },
-                    color: '#007bff' // Azul para vuelos
+                    color: '#007bff'
                 };
             }
         });
