@@ -15,11 +15,9 @@
             --emirates-gold: #c4a647;
             --dark-grey: #333333;
             --light-grey: #f4f5f7;
-            --medium-grey: #e0e0e0;
             --white: #ffffff;
             --font-main: 'Montserrat', sans-serif;
         }
-
         body {
             font-family: var(--font-main);
             margin: 0;
@@ -28,7 +26,6 @@
             color: var(--dark-grey);
             line-height: 1.6;
         }
-
         .container {
             width: 100%;
             max-width: 800px;
@@ -38,33 +35,27 @@
             overflow: hidden; 
             margin: 0 auto;
         }
-
         .header {
             padding: 25px 30px;
             background-color: var(--dark-grey);
             text-align: center;
         }
-        
         .header h1 {
             font-size: 2.5rem;
             font-weight: 700;
             margin: 0;
             color: var(--white);
         }
-
         .header h1 span {
             font-weight: 300;
             color: #ccc;
         }
-
         .main-content {
             padding: 30px;
         }
-        
         .step {
             margin-bottom: 30px;
         }
-        
         .step h2 {
             font-size: 1.5rem;
             font-weight: 700;
@@ -73,12 +64,10 @@
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
-        
         .step .instructions, .step li {
             font-size: 1rem;
             color: #6c757d;
         }
-        
         .bookmarklet-link {
             display: inline-block;
             padding: 10px 20px;
@@ -91,59 +80,25 @@
             cursor: move;
             margin: 10px 0;
         }
-        
-        textarea {
-            width: 100%;
-            height: 250px;
-            padding: 15px;
-            border: 1px solid var(--medium-grey);
-            border-radius: 8px;
-            font-family: "SF Mono", "Menlo", "Courier New", monospace;
-            font-size: 13px;
-            margin-top: 10px;
-            box-sizing: border-box;
-        }
-        
-        button {
-            width: 100%;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: var(--font-main);
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            box-sizing: border-box;
-            background-color: var(--emirates-red);
-            color: var(--white);
-            border: none;
-        }
-        button:hover {
-            background-color: #b8151c;
-            transform: translateY(-2px);
-        }
-        
-        #download-area {
-            margin-top: 25px;
+        #result-area {
             text-align: center;
-            height: 50px; 
+            margin-top: 25px;
+            min-height: 50px;
         }
-
-        #download-link {
-            display: none;
-            padding: 12px 25px;
+        .button-download {
+            display: inline-block;
+            padding: 15px 30px;
             background-color: #28a745;
             color: white;
             text-decoration: none;
             border-radius: 8px;
             font-weight: bold;
             transition: background-color 0.3s, transform 0.2s;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+        }
+        .button-download:hover {
+             background-color: #218838;
+             transform: scale(1.05);
         }
     </style>
 </head>
@@ -157,85 +112,158 @@
         <main class="main-content">
             
             <div class="step">
-                <h2>Easy Roster Grabber (Bookmarklet)</h2>
-                <p class="instructions">Use this "super-bookmark" to **instantly copy your roster text** without manual selection. This is the easiest way, especially on iPhone.</p>
+                <h2>The Easiest Method: The Smart Bookmarklet</h2>
+                <p class="instructions">This "super-bookmark" does all the work for you. No more copy-pasting!</p>
                 
-                <h3>Setup Instructions</h3>
+                <h3>Setup Instructions (One time only)</h3>
                 <ol>
-                    <li><strong>On Computer:</strong> Drag this link to your bookmarks bar: <a href="#" id="bookmarklet-link" class="bookmarklet-link">Process Roster</a></li>
-                    <li><strong>On iPhone/iPad:</strong>
+                    <li><strong>On Computer (Chrome, Safari):</strong> Drag this link to your bookmarks bar:<br><a href="#" id="bookmarklet-link" class="bookmarklet-link">Process Roster</a></li>
+                    <li><strong>On iPhone/iPad (Safari):</strong>
                         <ul style="padding-left: 20px;">
                             <li>Bookmark this page.</li>
-                            <li>Edit the new bookmark, change the name to "Process Roster".</li>
-                            <li>Clear the address and paste the code from the box below.</li>
+                            <li>Edit the new bookmark, rename it to `Process Roster`.</li>
+                            <li>Clear the address field, and paste the code from the box below (tap the button to copy it).</li>
                         </ul>
                     </li>
                 </ol>
-                <textarea id="bookmarklet-code" readonly style="height: 80px; font-size: 11px;"></textarea>
+                <textarea id="bookmarklet-code" readonly style="height: 100px; font-size: 10px; width: 100%; box-sizing: border-box;"></textarea>
                 <button id="copy-code-btn" style="width: auto; padding: 8px 15px; font-size: 0.9rem; margin-top: 5px;">Copy Code for iPhone</button>
             </div>
             
             <div class="step">
-                <h2>Process Your Roster</h2>
-                <p class="instructions">Go to the roster page, click your "Process Roster" bookmarklet, then come back here and paste the text below.</p>
-                <textarea id="roster-input" placeholder="Paste your roster text here..."></textarea>
-                <button id="process-btn">Generate .ics File</button>
-                 <div id="download-area">
-                    </div>
+                <h2>How to Use</h2>
+                 <ol>
+                    <li>Go to the official Emirates roster page.</li>
+                    <li>Open your bookmarks and tap on **"Process Roster"**.</li>
+                    <li>Done! This page will reload with a download button ready for you.</li>
+                </ol>
+            </div>
+
+            <div id="result-area">
+                 <p class="instructions">Waiting for data from the bookmarklet...</p>
             </div>
         </main>
     </div>
 
     <script>
-        // --- LÓGICA DE LA PÁGINA Y BOOKMARKLET ---
+        // --- DATA MAPS ---
+        const timeZoneOffsets = { 'ABJ': 0, 'ABV': 1, 'ACC': 0, 'ADD': 3, 'ADL': 9.5, 'AKL': 12, 'ALG': 1, 'AMD': 5.5, 'AMM': 3, 'AMS': 2, 'ARN': 2, 'ATH': 3, 'ATL': -4, 'BAH': 3, 'BBI': 5.5, 'BCN': 2, 'BEY': 3, 'BGI': -4, 'BGW': 3, 'BHX': 1, 'BKK': 7, 'BLQ': 2, 'BLR': 5.5, 'BNE': 10, 'BOG': -5, 'BOM': 5.5, 'BOS': -4, 'BRU': 2, 'BSB': -3, 'BSR': 3, 'BUD': 2, 'CAI': 3, 'CAN': 8, 'CCJ': 5.5, 'CCU': 5.5, 'CDG': 2, 'CEB': 8, 'CGK': 7, 'CHC': 12, 'CKY': 0, 'CMB': 5.5, 'CMN': 1, 'COK': 5.5, 'CPH': 2, 'CPT': 2, 'CRK': 8, 'DAC': 6, 'DAR': 3, 'DEL': 5.5, 'DEN': -6, 'DFW': -5, 'DJE': 1, 'DME': 3, 'DMM': 3, 'DOH': 3, 'DPS': 8, 'DSS': 0, 'DUB': 1, 'DUR': 2, 'DUS': 2, 'DXB': 4, 'EBB': 3, 'EDI': 1, 'EWR': -4, 'EZE': -3, 'FCO': 2, 'FRA': 2, 'GIG': -3, 'GLA': 1, 'GOT': 2, 'GRU': -3, 'GVA': 2, 'GYD': 4, 'HAM': 2, 'HAN': 7, 'HBE': 3, 'HEL': 3, 'HGH': 8, 'HKG': 8, 'HKT': 7, 'HND': 9, 'HRE': 2, 'HYD': 5.5, 'IAD': -4, 'IAH': -5, 'ICN': 9, 'IKA': 3.5, 'ISB': 5, 'IST': 3, 'JED': 3, 'JFK': -4, 'JNB': 2, 'KHI': 5, 'KIX': 9, 'KRT': 2, 'KUL': 8, 'KWI': 3, 'LAD': 1, 'LAX': -7, 'LCA': 3, 'LED': 3, 'LGW': 1, 'LHE': 5, 'LHR': 1, 'LIS': 1, 'LOS': 1, 'LUN': 2, 'LYS': 2, 'MAA': 5.5, 'MAD': 2, 'MAN': 1, 'MCO': -4, 'MCT': 4, 'MED': 3, 'MEL': 10, 'MEX': -6, 'MIA': -4, 'MLA': 2, 'MLE': 5, 'MNL': 8, 'MPM': 2, 'MRU': 4, 'MUC': 2, 'MXP': 2, 'NBO': 3, 'NCE': 2, 'NCL': 1, 'NDJ': 1, 'NRT': 9, 'ORD': -5, 'OSL': 2, 'OTP': 3, 'PER': 8, 'PEW': 5, 'PNH': 7, 'PRG': 2, 'PVG': 8, 'RUH': 3, 'SAW': 3, 'SEA': -7, 'SEZ': 4, 'SFO': -7, 'SGN': 7, 'SIN': 8, 'SKT': 5, 'STN': 1, 'SZX': 8, 'SYD': 10, 'TNR': 3, 'TPE': 8, 'TLV': 3, 'TRV': 5.5, 'TUN': 1, 'VCE': 2, 'VIE': 2, 'WAW': 2, 'YYC': -6, 'YUL': -4, 'YYZ': -4, 'ZAG': 2, 'ZRH': 2 };
+        const airportNames = { 'ABJ': 'Abidjan', 'ABV': 'Abuja', 'ACC': 'Accra', 'ADD': 'Addis Ababa', 'ADL': 'Adelaide', 'AKL': 'Auckland', 'ALG': 'Algiers', 'AMD': 'Ahmedabad', 'AMM': 'Amman', 'AMS': 'Amsterdam', 'ARN': 'Stockholm', 'ATH': 'Athens', 'ATL': 'Atlanta', 'BAH': 'Bahrain', 'BBI': 'Bhubaneswar', 'BCN': 'Barcelona', 'BEY': 'Beirut', 'BGW': 'Baghdad', 'BHX': 'Birmingham', 'BKK': 'Bangkok', 'BLQ': 'Bologna', 'BLR': 'Bengaluru', 'BNE': 'Brisbane', 'BOG': 'Bogota', 'BOM': 'Mumbai', 'BOS': 'Boston', 'BRU': 'Brussels', 'BSR': 'Basra', 'BUD': 'Budapest', 'CAI': 'Cairo', 'CAN': 'Guangzhou', 'CCJ': 'Kozhikode', 'CCU': 'Kolkata', 'CDG': 'Paris', 'CEB': 'Cebu', 'CGK': 'Jakarta', 'CHC': 'Christchurch', 'CKY': 'Conakry', 'CMB': 'Colombo', 'CMN': 'Casablanca', 'COK': 'Kochi', 'CPH': 'Copenhagen', 'CPT': 'Cape Town', 'CRK': 'Clark', 'DAC': 'Dhaka', 'DAR': 'Dar es Salaam', 'DEL': 'Delhi', 'DEN': 'Denver', 'DFW': 'Dallas', 'DJE': 'Djerba', 'DME': 'Moscow', 'DMM': 'Dammam', 'DOH': 'Doha', 'DPS': 'Denpasar', 'DSS': 'Dakar', 'DUB': 'Dublin', 'DUR': 'Durban', 'DUS': 'Dusseldorf', 'DXB': 'Dubai', 'EBB': 'Entebbe', 'EDI': 'Edinburgh', 'EWR': 'Newark', 'EZE': 'Buenos Aires', 'FCO': 'Rome', 'FRA': 'Frankfurt', 'GIG': 'Rio de Janeiro', 'GLA': 'Glasgow', 'GOT': 'Gothenburg', 'GRU': 'Sao Paulo', 'GVA': 'Geneva', 'GYD': 'Baku', 'HAM': 'Hamburg', 'HAN': 'Hanoi', 'HBE': 'Alexandria', 'HEL': 'Helsinki', 'HGH': 'Hangzhou', 'HKG': 'Hong Kong', 'HKT': 'Phuket', 'HND': 'Tokyo-Haneda', 'HRE': 'Harare', 'HYD': 'Hyderabad', 'IAD': 'Washington D.C.', 'IAH': 'Houston', 'ICN': 'Seoul', 'IKA': 'Tehran', 'ISB': 'Islamabad', 'IST': 'Istanbul', 'JED': 'Jeddah', 'JFK': 'New York', 'JNB': 'Johannesburg', 'KHI': 'Karachi', 'KIX': 'Osaka', 'KRT': 'Khartoum', 'KUL': 'Kuala Lumpur', 'KWI': 'Kuwait City', 'LAD': 'Luanda', 'LAX': 'Los Angeles', 'LCA': 'Larnaca', 'LED': 'St. Petersburg', 'LGW': 'London-Gatwick', 'LHE': 'Lahore', 'LHR': 'London-Heathrow', 'LIS': 'Lisbon', 'LOS': 'Lagos', 'LUN': 'Lusaka', 'LYS': 'Lyon', 'MAA': 'Chennai', 'MAD': 'Madrid', 'MAN': 'Manchester', 'MCO': 'Orlando', 'MCT': 'Muscat', 'MED': 'Medina', 'MEL': 'Melbourne', 'MEX': 'Mexico City', 'MIA': 'Miami', 'MLA': 'Malta', 'MLE': 'Malé', 'MNL': 'Manila', 'MPM': 'Maputo', 'MRU': 'Mauritius', 'MUC': 'Munich', 'MXP': 'Milan', 'NBO': 'Nairobi', 'NCE': 'Nice', 'NCL': 'Newcastle', 'NRT': 'Tokyo-Narita', 'ORD': 'Chicago', 'OSL': 'Oslo', 'OTP': 'Bucharest', 'PER': 'Perth', 'PEW': 'Peshawar', 'PNH': 'Phnom Penh', 'PRG': 'Prague', 'PVG': 'Shanghai', 'RUH': 'Riyadh', 'SAW': 'Istanbul-Sabiha', 'SEA': 'Seattle', 'SEZ': 'Seychelles', 'SFO': 'San Francisco', 'SGN': 'Ho Chi Minh City', 'SIN': 'Singapore', 'SKT': 'Sialkot', 'STN': 'London-Stansted', 'SZX': 'Shenzhen', 'SYD': 'Sydney', 'TNR': 'Antananarivo', 'TPE': 'Taipei', 'TLV': 'Tel Aviv', 'TRV': 'Thiruvananthapuram', 'TUN': 'Tunis', 'VCE': 'Venice', 'VIE': 'Vienna', 'WAW': 'Warsaw', 'YYC': 'Calgary', 'YUL': 'Montreal', 'YYZ': 'Toronto', 'ZAG': 'Zagreb', 'ZRH': 'Zurich' };
+
+        // --- LÓGICA DE LA PÁGINA ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Generar dinámicamente el código del bookmarklet
+            const resultArea = document.getElementById('result-area');
             const bookmarkletCodeTextarea = document.getElementById('bookmarklet-code');
             const bookmarkletLink = document.getElementById('bookmarklet-link');
-            
-            const bookmarkletCode = `javascript:(function(){try{navigator.clipboard.writeText(document.body.innerText);alert('Roster text copied!\\n\\nNow go back to the RosterCal page and paste.');}catch(e){alert('Error: Could not copy text.');}})();`;
-            
-            bookmarkletCodeTextarea.value = bookmarkletCode;
-            bookmarkletLink.href = bookmarkletCode;
+            const copyCodeBtn = document.getElementById('copy-code-btn');
 
-            // Botón para copiar el código del bookmarklet
-            document.getElementById('copy-code-btn').addEventListener('click', () => {
+            // 1. Minificar y preparar el código del bookmarklet
+            // Toda la lógica de parseo se inyecta aquí
+            const bookmarkletLogic = `
+                const timeZoneOffsets = ${JSON.stringify(timeZoneOffsets)};
+                const airportNames = ${JSON.stringify(airportNames)};
+                
+                // --- A partir de aquí, es la lógica de parseo que ya teníamos ---
+                function parseRoster(text) {
+                    const duties = [];
+                    const leave = [];
+                    const lines = text.split('\\n');
+                    const dateMatch = text.match(/(\\d{1,2})-(\\d{1,2})-(\\d{4})\\s+to/);
+                    if (!dateMatch) { alert("Error: Roster month/year not found."); return null; }
+                    const month = parseInt(dateMatch[2], 10);
+                    const year = parseInt(dateMatch[3], 10);
+                    let currentDay = null, lastReportTime = null;
+
+                    for (const line of lines) {
+                        const p = line.match(/^(\\d{2})\\s+\\w{3}.*?(\\d{2}:\\d{2})\\s+(\\w+)\\s+([A-Z]{3})\\s+(\\d{2}:\\d{2})\\s+([A-Z]{3})\\s+(\\d{2}:\\d{2})\\s+(\\d{2}:\\d{2})/);
+                        const s = line.trim().match(/^(\\d{2}:\\d{2})\\s+(\\w+)\\s+([A-Z]{3})\\s+(\\d{2}:\\d{2})\\s+([A-Z]{3})\\s+(\\d{2}:\\d{2})\\s+(\\d{2}:\\d{2})/);
+                        const c = line.trim().match(/^(\\w+)\\s+(\\d{2}:\\d{2})\\s+(\\w+)\\s+([A-Z]{3})\\s+(\\d{2}:\\d{2})\\s+([A-Z]{3})\\s+(\\d{2}:\\d{2})\\s+(\\d{2}:\\d{2})/);
+                        const l = line.match(/^(\\d{2})\\s+\\w{3}\\s+([A-Z0-9]+)\\s+(\\d{2}:\\d{2})\\s+(.+?)\\s+(\\d{2}:\\d{2})$/);
+                        const d = line.match(/^(\\d{2})\\s+\\w{3}\\s+XXR?/);
+                        
+                        let dutyInfo = null;
+                        if(p){currentDay=parseInt(p[1],10);dutyInfo={d:currentDay,r:p[2],f:p[3],ds:p[4],dt:p[5],as:p[6],du:p[8]};lastReportTime=p[2]}
+                        else if(s&&currentDay&&lastReportTime){dutyInfo={d:currentDay,r:lastReportTime,f:s[2],ds:s[3],dt:s[4],as:s[5],du:s[7]}}
+                        else if(c&&currentDay){dutyInfo={d:currentDay,r:c[2],f:c[1],ds:c[4],dt:c[5],as:c[6],du:c[8]}}
+                        
+                        if(dutyInfo){
+                            const offset=timeZoneOffsets[dutyInfo.ds];
+                            if(offset===undefined){continue}
+                            const createUTC= (day, timeStr) => {const[h,m]=timeStr.split(':').map(Number); let dt=new Date(Date.UTC(year,month-1,day,h,m)); dt.setUTCHours(dt.getUTCHours()-offset); return dt.getTime();};
+                            const report=createUTC(dutyInfo.d,dutyInfo.r);
+                            let depart=createUTC(dutyInfo.d,dutyInfo.dt);
+                            if(depart<report){depart=new Date(depart).setUTCDate(new Date(depart).getUTCDate()+1)}
+                            const[durH,durM]=dutyInfo.du.split(':').map(Number);
+                            const durMs=(durH*60+durM)*60*1000;
+                            const arrive=new Date(depart).getTime()+durMs;
+                            duties.push({r:report,d:depart,a:arrive,f:dutyInfo.f,ds:dutyInfo.ds,as:dutyInfo.as,du:dutyInfo.du});
+                        } else if (l||d){
+                            const isDayOff=!!d;const m=isDayOff?d:l;currentDay=parseInt(m[1],10);
+                            const offset=timeZoneOffsets['DXB'];
+                            const createDXBUTC=(day,h,m)=>{let dt=new Date(Date.UTC(year,month-1,day,h,m));dt.setUTCHours(dt.getUTCHours()-offset);return dt.getTime()};
+                            let t,desc,st,et;
+                            if(isDayOff){const type=line.includes('XXR')?'DAY OFF (RSV CREW)':'Day Off';t=\`🏠 Day Off\${type.includes('RSV')?' (RSV CREW)':''}\`;desc=type;st=createDXBUTC(currentDay,0,1);et=createDXBUTC(currentDay,23,59)}
+                            else{const[_,_d,type,sStr,dStr,eStr]=m;desc=dStr.trim();const dLow=desc.toLowerCase();
+                            if(type.startsWith('C')){t=\`📖 \${type}\`}
+                            else if(dLow.includes('sby')){t=\`📡 \${desc} (\${sStr}-\${eStr})\`}
+                            else if(dLow.includes('annual leave')){t='🏠 Normal annual leave'}
+                            else if(dLow.includes('live leave')){t='🏠 LIVE LEAVE'}
+                            else if(dLow.includes('day off')){const r=dLow.replace('day off','').trim();t=\`🏠 Day Off\${r?` (\${r.toUpperCase()})`:''}\`}
+                            else if(dLow==='sick'){t='🤒 SICK'}else{t=\`🏠 \${desc}\`}
+                            const[sh,sm]=sStr.split(':').map(Number);const[eh,em]=eStr.split(':').map(Number);st=createDXBUTC(currentDay,sh,sm);et=createDXBUTC(currentDay,eh,em);if(et<st){et=new Date(et).setDate(new Date(et).getDate()+1)}}
+                            leave.push({t,d:desc,l:'Home',s:st,e:et});
+                        }
+                    }
+                    return {duties, leave};
+                };
+                try {
+                    const rosterData = parseRoster(document.body.innerText);
+                    if (rosterData) {
+                        const encodedData = encodeURIComponent(JSON.stringify(rosterData));
+                        window.open('${window.location.href.split('?')[0]}?data=' + encodedData, '_blank');
+                    }
+                } catch(e) {
+                    alert('An error occurred: ' + e.message);
+                }
+            `;
+            // Minificar el código para el bookmarklet
+            const minifiedCode = `javascript:(${bookmarkletLogic.replace(/\s\s+/g, ' ').replace(/\n/g, '')})()`;
+            
+            bookmarkletCodeTextarea.value = minifiedCode;
+            bookmarkletLink.href = minifiedCode;
+            
+            copyCodeBtn.addEventListener('click', () => {
                 bookmarkletCodeTextarea.select();
                 document.execCommand('copy');
                 alert('Code copied to clipboard! Now edit your bookmark and paste this in the address field.');
             });
 
-            // Botón de procesado
-            document.getElementById('process-btn').addEventListener('click', () => {
-                const text = document.getElementById('roster-input').value;
-                if (!text) {
-                    alert("Please paste your roster text first.");
-                    return;
+            // Comprobar si la página se ha cargado con datos
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('data');
+
+            if (dataParam) {
+                try {
+                    const parsedData = JSON.parse(decodeURIComponent(dataParam));
+                    const events = createEventsFromParsedData(
+                        parsedData.duties.map(d => ({...d, reportTime: new Date(d.r), departureTime: new Date(d.d), arrivalTime: new Date(d.a)})),
+                        parsedData.leave.map(l => ({...l, title: l.t, description: l.d, location: l.l, startTime: new Date(l.s), endTime: new Date(l.e)}))
+                    );
+                    const icsContent = generateIcsFile(events);
+                    const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                    const url = URL.createObjectURL(file);
+                    
+                    resultArea.innerHTML = `
+                        <h3>Success! ${events.length} events found.</h3>
+                        <a href="${url}" download="MyRoster.ics" class="button-download">Download .ics File</a>
+                    `;
+                } catch (e) {
+                     resultArea.innerHTML = `<p style="color:red;">Error processing data. Please try again.</p>`;
                 }
-                const events = parsePlainTextForRosterEvents(text);
-                if (!events || events.length === 0) {
-                    return; // Error alert is shown inside the parser
-                }
-                const icsContent = generateIcsFile(events);
-                const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                const url = URL.createObjectURL(file);
-                
-                const downloadArea = document.getElementById('download-area');
-                downloadArea.innerHTML = `<a href="${url}" id="download-link" download="MyRoster.ics" style="display:inline-block;">Download File</a>`;
-                alert(`${events.length} events are ready. Click the download link.`);
-            });
+            }
         });
 
-        // --- LÓGICA DE PARSEO Y GENERACIÓN (SIN CAMBIOS) ---
-        const timeZoneOffsets = { 'ABJ': 0, 'ABV': 1, 'ACC': 0, 'ADD': 3, 'ADL': 9.5, 'AKL': 12, 'ALG': 1, 'AMD': 5.5, 'AMM': 3, 'AMS': 2, 'ARN': 2, 'ATH': 3, 'ATL': -4, 'BAH': 3, 'BBI': 5.5, 'BCN': 2, 'BEY': 3, 'BGI': -4, 'BGW': 3, 'BHX': 1, 'BKK': 7, 'BLQ': 2, 'BLR': 5.5, 'BNE': 10, 'BOG': -5, 'BOM': 5.5, 'BOS': -4, 'BRU': 2, 'BSB': -3, 'BSR': 3, 'BUD': 2, 'CAI': 3, 'CAN': 8, 'CCJ': 5.5, 'CCU': 5.5, 'CDG': 2, 'CEB': 8, 'CGK': 7, 'CHC': 12, 'CKY': 0, 'CMB': 5.5, 'CMN': 1, 'COK': 5.5, 'CPH': 2, 'CPT': 2, 'CRK': 8, 'DAC': 6, 'DAR': 3, 'DEL': 5.5, 'DEN': -6, 'DFW': -5, 'DJE': 1, 'DME': 3, 'DMM': 3, 'DOH': 3, 'DPS': 8, 'DSS': 0, 'DUB': 1, 'DUR': 2, 'DUS': 2, 'DXB': 4, 'EBB': 3, 'EDI': 1, 'EWR': -4, 'EZE': -3, 'FCO': 2, 'FRA': 2, 'GIG': -3, 'GLA': 1, 'GOT': 2, 'GRU': -3, 'GVA': 2, 'GYD': 4, 'HAM': 2, 'HAN': 7, 'HBE': 3, 'HEL': 3, 'HGH': 8, 'HKG': 8, 'HKT': 7, 'HND': 9, 'HRE': 2, 'HYD': 5.5, 'IAD': -4, 'IAH': -5, 'ICN': 9, 'IKA': 3.5, 'ISB': 5, 'IST': 3, 'JED': 3, 'JFK': -4, 'JNB': 2, 'KHI': 5, 'KIX': 9, 'KRT': 2, 'KUL': 8, 'KWI': 3, 'LAD': 1, 'LAX': -7, 'LCA': 3, 'LED': 3, 'LGW': 1, 'LHE': 5, 'LHR': 1, 'LIS': 1, 'LOS': 1, 'LUN': 2, 'LYS': 2, 'MAA': 5.5, 'MAD': 2, 'MAN': 1, 'MCO': -4, 'MCT': 4, 'MED': 3, 'MEL': 10, 'MEX': -6, 'MIA': -4, 'MLA': 2, 'MLE': 5, 'MNL': 8, 'MPM': 2, 'MRU': 4, 'MUC': 2, 'MXP': 2, 'NBO': 3, 'NCE': 2, 'NCL': 1, 'NDJ': 1, 'NRT': 9, 'ORD': -5, 'OSL': 2, 'OTP': 3, 'PER': 8, 'PEW': 5, 'PNH': 7, 'PRG': 2, 'PVG': 8, 'RUH': 3, 'SAW': 3, 'SEA': -7, 'SEZ': 4, 'SFO': -7, 'SGN': 7, 'SIN': 8, 'SKT': 5, 'STN': 1, 'SZX': 8, 'SYD': 10, 'TNR': 3, 'TPE': 8, 'TLV': 3, 'TRV': 5.5, 'TUN': 1, 'VCE': 2, 'VIE': 2, 'WAW': 2, 'YYC': -6, 'YUL': -4, 'YYZ': -4, 'ZAG': 2, 'ZRH': 2 };
-        const airportNames = { 'ABJ': 'Abidjan', 'ABV': 'Abuja', 'ACC': 'Accra', 'ADD': 'Addis Ababa', 'ADL': 'Adelaide', 'AKL': 'Auckland', 'ALG': 'Algiers', 'AMD': 'Ahmedabad', 'AMM': 'Amman', 'AMS': 'Amsterdam', 'ARN': 'Stockholm', 'ATH': 'Athens', 'ATL': 'Atlanta', 'BAH': 'Bahrain', 'BBI': 'Bhubaneswar', 'BCN': 'Barcelona', 'BEY': 'Beirut', 'BGW': 'Baghdad', 'BHX': 'Birmingham', 'BKK': 'Bangkok', 'BLQ': 'Bologna', 'BLR': 'Bengaluru', 'BNE': 'Brisbane', 'BOG': 'Bogota', 'BOM': 'Mumbai', 'BOS': 'Boston', 'BRU': 'Brussels', 'BSR': 'Basra', 'BUD': 'Budapest', 'CAI': 'Cairo', 'CAN': 'Guangzhou', 'CCJ': 'Kozhikode', 'CCU': 'Kolkata', 'CDG': 'Paris', 'CEB': 'Cebu', 'CGK': 'Jakarta', 'CHC': 'Christchurch', 'CKY': 'Conakry', 'CMB': 'Colombo', 'CMN': 'Casablanca', 'COK': 'Kochi', 'CPH': 'Copenhagen', 'CPT': 'Cape Town', 'CRK': 'Clark', 'DAC': 'Dhaka', 'DAR': 'Dar es Salaam', 'DEL': 'Delhi', 'DEN': 'Denver', 'DFW': 'Dallas', 'DJE': 'Djerba', 'DME': 'Moscow', 'DMM': 'Dammam', 'DOH': 'Doha', 'DPS': 'Denpasar', 'DSS': 'Dakar', 'DUB': 'Dublin', 'DUR': 'Durban', 'DUS': 'Dusseldorf', 'DXB': 'Dubai', 'EBB': 'Entebbe', 'EDI': 'Edinburgh', 'EWR': 'Newark', 'EZE': 'Buenos Aires', 'FCO': 'Rome', 'FRA': 'Frankfurt', 'GIG': 'Rio de Janeiro', 'GLA': 'Glasgow', 'GOT': 'Gothenburg', 'GRU': 'Sao Paulo', 'GVA': 'Geneva', 'GYD': 'Baku', 'HAM': 'Hamburg', 'HAN': 'Hanoi', 'HBE': 'Alexandria', 'HEL': 'Helsinki', 'HGH': 'Hangzhou', 'HKG': 'Hong Kong', 'HKT': 'Phuket', 'HND': 'Tokyo-Haneda', 'HRE': 'Harare', 'HYD': 'Hyderabad', 'IAD': 'Washington D.C.', 'IAH': 'Houston', 'ICN': 'Seoul', 'IKA': 'Tehran', 'ISB': 'Islamabad', 'IST': 'Istanbul', 'JED': 'Jeddah', 'JFK': 'New York', 'JNB': 'Johannesburg', 'KHI': 'Karachi', 'KIX': 'Osaka', 'KRT': 'Khartoum', 'KUL': 'Kuala Lumpur', 'KWI': 'Kuwait City', 'LAD': 'Luanda', 'LAX': 'Los Angeles', 'LCA': 'Larnaca', 'LED': 'St. Petersburg', 'LGW': 'London-Gatwick', 'LHE': 'Lahore', 'LHR': 'London-Heathrow', 'LIS': 'Lisbon', 'LOS': 'Lagos', 'LUN': 'Lusaka', 'LYS': 'Lyon', 'MAA': 'Chennai', 'MAD': 'Madrid', 'MAN': 'Manchester', 'MCO': 'Orlando', 'MCT': 'Muscat', 'MED': 'Medina', 'MEL': 'Melbourne', 'MEX': 'Mexico City', 'MIA': 'Miami', 'MLA': 'Malta', 'MLE': 'Malé', 'MNL': 'Manila', 'MPM': 'Maputo', 'MRU': 'Mauritius', 'MUC': 'Munich', 'MXP': 'Milan', 'NBO': 'Nairobi', 'NCE': 'Nice', 'NCL': 'Newcastle', 'NRT': 'Tokyo-Narita', 'ORD': 'Chicago', 'OSL': 'Oslo', 'OTP': 'Bucharest', 'PER': 'Perth', 'PEW': 'Peshawar', 'PNH': 'Phnom Penh', 'PRG': 'Prague', 'PVG': 'Shanghai', 'RUH': 'Riyadh', 'SAW': 'Istanbul-Sabiha', 'SEA': 'Seattle', 'SEZ': 'Seychelles', 'SFO': 'San Francisco', 'SGN': 'Ho Chi Minh City', 'SIN': 'Singapore', 'SKT': 'Sialkot', 'STN': 'London-Stansted', 'SZX': 'Shenzhen', 'SYD': 'Sydney', 'TNR': 'Antananarivo', 'TPE': 'Taipei', 'TLV': 'Tel Aviv', 'TRV': 'Thiruvananthapuram', 'TUN': 'Tunis', 'VCE': 'Venice', 'VIE': 'Vienna', 'WAW': 'Warsaw', 'YYC': 'Calgary', 'YUL': 'Montreal', 'YYZ': 'Toronto', 'ZAG': 'Zagreb', 'ZRH': 'Zurich' };
-        function createEventsFromParsedData(duties,leave){const finalEvents=[];leave.forEach(l=>finalEvents.push(l));const sortedDuties=duties.sort((a,b)=>a.reportTime-b.reportTime);sortedDuties.forEach((duty,index)=>{if(duty.depSt==='DXB'){finalEvents.push({title:'🕑 REPORT',description:`Report for flight EK${duty.flightNum} to ${duty.arrSt}`,location:duty.depSt,startTime:duty.reportTime,endTime:new Date(duty.reportTime.getTime()+90*60*1000)})}const depName=airportNames[duty.depSt]||duty.depSt;const arrName=airportNames[duty.arrSt]||duty.arrSt;finalEvents.push({title:`✈️ ${depName} (${duty.depSt}) - ${arrName} (${duty.arrSt})`,description:`Flight EK${duty.flightNum}. Duration: ${duty.durationStr}.`,location:`${duty.depSt}-${duty.arrSt}`,startTime:duty.departureTime,endTime:duty.arrivalTime});const nextDuty=sortedDuties[index+1];if(nextDuty&&duty.arrSt===nextDuty.depSt&&duty.arrSt!=='DXB'){const layoverStart=duty.arrivalTime;const layoverEnd=nextDuty.departureTime;if(layoverEnd>layoverStart){const durationMillis=layoverEnd.getTime()-layoverStart.getTime();if(durationMillis>(12*60*60*1000)){const totalMinutes=Math.round(durationMillis/(1000*60));const hours=Math.floor(totalMinutes/60);const minutes=totalMinutes%60;const formattedDuration=`${hours}:${String(minutes).padStart(2,'0')}`;finalEvents.push({title:`💼 Layover (${formattedDuration} hours)`,description:`Layover in ${duty.arrSt}. Total duration: ${formattedDuration} hours.`,location:duty.arrSt,startTime:layoverStart,endTime:layoverEnd})}}}})
-        return finalEvents}
-        function parsePlainTextForRosterEvents(text){const parsedDuties=[];const parsedLeave=[];const lines=text.split('\n');const dateRangeMatch=text.match(/(\d{1,2})-(\d{1,2})-(\d{4})\s+to/);if(!dateRangeMatch){alert("Error: Could not determine the roster's month and year. Make sure to copy the date line (e.g., '1-8-2024 to 31-8-2024').");return[]}const month=parseInt(dateRangeMatch[2],10);const year=parseInt(dateRangeMatch[3],10);let currentDay=null;let lastReportTime=null;for(const line of lines){const primaryFlightMatch=line.match(/^(\d{2})\s+\w{3}.*?(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);const secondaryFlightMatch=line.trim().match(/^(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);const calledOutFlightMatch=line.trim().match(/^(\w+)\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);const leaveMatch=line.match(/^(\d{2})\s+\w{3}\s+([A-Z0-9]+)\s+(\d{2}:\d{2})\s+(.+?)\s+(\d{2}:\d{2})$/);const dayOffMatch=line.match(/^(\d{2})\s+\w{3}\s+XXR?/);let dutyInfo=null;if(primaryFlightMatch){currentDay=parseInt(primaryFlightMatch[1],10);const[_,dayStr,reportTimeStr,flightNum,depSt,depTimeStr,arrSt,arrTimeStr,durationStr]=primaryFlightMatch;dutyInfo={day:currentDay,reportTimeStr,flightNum,depSt,depTimeStr,arrSt,durationStr};lastReportTime=reportTimeStr}else if(secondaryFlightMatch&&currentDay&&lastReportTime){const[_,reportTimeStr,flightNum,depSt,depTimeStr,arrSt,arrTimeStr,durationStr]=secondaryFlightMatch;dutyInfo={day:currentDay,reportTimeStr:lastReportTime,flightNum,depSt,depTimeStr,arrSt,durationStr}}else if(calledOutFlightMatch&&currentDay){const[_,flightNum,reportTimeStr,__,depSt,depTimeStr,arrSt,arrTimeStr,durationStr]=calledOutFlightMatch;dutyInfo={day:currentDay,reportTimeStr,flightNum,depSt,depTimeStr,arrSt,durationStr}}
-        if(dutyInfo){const offset=timeZoneOffsets[dutyInfo.depSt];if(offset===undefined){alert(`Error: Timezone not found for ${dutyInfo.depSt}.`);continue}const createUTCDate=(day,timeStr)=>{const[h,m]=timeStr.split(':').map(Number);let dt=new Date(Date.UTC(year,month-1,day,h,m));dt.setUTCHours(dt.getUTCHours()-offset);return dt};const reportTime=createUTCDate(dutyInfo.day,dutyInfo.reportTimeStr);let departureTime=createUTCDate(dutyInfo.day,dutyInfo.depTimeStr);if(departureTime<reportTime){departureTime.setUTCDate(departureTime.getUTCDate()+1)}const[durH,durM]=dutyInfo.durationStr.split(':').map(Number);const durationMillis=(durH*60+durM)*60*1000;const arrivalTime=new Date(departureTime.getTime()+durationMillis);parsedDuties.push({reportTime,departureTime,arrivalTime,flightNum:dutyInfo.flightNum,depSt:dutyInfo.depSt,arrSt:dutyInfo.arrSt,durationStr:dutyInfo.durationStr})}else if(leaveMatch||dayOffMatch){const isDayOff=!!dayOffMatch;const matchData=isDayOff?dayOffMatch:leaveMatch;currentDay=parseInt(matchData[1],10);const createDubaiUTCDate=(day,h,m)=>{const offset=timeZoneOffsets['DXB'];let dt=new Date(Date.UTC(year,month-1,day,h,m));dt.setUTCHours(dt.getUTCHours()-offset);return dt};let title,description,startTime,endTime;if(isDayOff){const type=line.includes('XXR')?'DAY OFF (RSV CREW)':'Day Off';title=`🏠 Day Off${type.includes('RSV')?' (RSV CREW)':''}`;description=type;startTime=createDubaiUTCDate(currentDay,0,1);endTime=createDubaiUTCDate(currentDay,23,59)}else{const[_,dayStr,type,startTimeStr,desc,endTimeStr]=matchData;description=desc.trim();const descLower=description.toLowerCase();if(type.startsWith('C')){title=`📖 ${type}`}else if(descLower.includes('sby')){title=`📡 ${description} (${startTimeStr}-${endTimeStr})`}else if(descLower.includes('annual leave')){title='🏠 Normal annual leave'}else if(descLower.includes('live leave')){title='🏠 LIVE LEAVE'}else if(descLower.includes('day off')){const reason=descLower.replace('day off','').trim();title=`🏠 Day Off${reason?` (${reason.toUpperCase()})`:''}`}else if(descLower==='sick'){title='🤒 SICK'}else{title=`🏠 ${description}`}
-        const[startH,startM]=startTimeStr.split(':').map(Number);const[endH,endM]=endTimeStr.split(':').map(Number);startTime=createDubaiUTCDate(currentDay,startH,startM);let endTimeDate=createDubaiUTCDate(currentDay,endH,endM);if(endTimeDate<startTime){endTimeDate.setDate(endTimeDate.getDate()+1)}endTime=endTimeDate}parsedLeave.push({title,description,location:"Home",startTime,endTime})}}
-        return createEventsFromParsedData(parsedDuties,parsedLeave)}
-        function generateIcsFile(events){events.sort((a,b)=>a.startTime-b.startTime);let icsString=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RosterCal//EN'].join('\r\n')+'\r\n';events.forEach(event=>{if(!event.startTime||!event.endTime||isNaN(event.startTime)||isNaN(event.endTime))return;const formatDT=dt=>dt.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';icsString+=['BEGIN:VEVENT',`UID:${Date.now()}${Math.random()}@yourdomain.com`,`DTSTAMP:${formatDT(new Date())}`,`DTSTART:${formatDT(event.startTime)}`,`DTEND:${formatDT(event.endTime)}`,`SUMMARY:${event.title}`,`DESCRIPTION:${event.description}`,`LOCATION:${event.location}`,'END:VEVENT'].join('\r\n')+'\r\n'});icsString+='END:VCALENDAR';return icsString}
+        function generateIcsFile(events){events.sort((a,b)=>a.startTime-b.startTime);let icsString=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RosterCal//EN'].join('\r\n')+'\r\n';events.forEach(event=>{if(!event.startTime||!event.endTime||isNaN(event.startTime)||isNaN(event.endTime))return;const formatDT=dt=>new Date(dt).toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';icsString+=['BEGIN:VEVENT',`UID:${Date.now()}${Math.random()}@yourdomain.com`,`DTSTAMP:${formatDT(new Date())}`,`DTSTART:${formatDT(event.startTime)}`,`DTEND:${formatDT(event.endTime)}`,`SUMMARY:${event.title}`,`DESCRIPTION:${event.description}`,`LOCATION:${event.location}`,'END:VEVENT'].join('\r\n')+'\r\n'});icsString+='END:VCALENDAR';return icsString}
     </script>
 
 </body>
