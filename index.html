@@ -107,29 +107,27 @@
             cursor: move;
             margin-top: 10px;
         }
-
+        
         /* Magic Button styles */
         .magic-button {
             display: inline-flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 160px;
-            height: 160px;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
             background-color: var(--emirates-red);
             color: var(--white);
             text-decoration: none;
-            font-weight: 700;
-            font-size: 1rem;
             cursor: pointer;
             transition: background-color 0.3s, transform 0.2s;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            border: 4px solid var(--white);
         }
-        .magic-button:hover { transform: scale(1.05); }
-        .magic-button .icon { font-size: 3rem; line-height: 1; }
-        .magic-button .text { margin-top: 10px; }
+        .magic-button:hover { transform: scale(1.1); }
+        .magic-button .icon { font-size: 2.5rem; line-height: 1; }
         .magic-button.success { background-color: var(--green); }
+
     </style>
 </head>
 <body>
@@ -142,7 +140,7 @@
         <main class="main-content">
             
             <details>
-                <summary>Bookmarklet Setup & Instructions</summary>
+                <summary>Bookmarklet Setup Instructions</summary>
                 <div class="details-content">
                     <p class="instructions" style="margin-top: 15px;">To easily copy your roster (especially on iPhone), set up this bookmarklet once.</p>
                     <ol>
@@ -156,10 +154,9 @@
             
             <div class="step">
                 <h2>Process Your Roster</h2>
-                <p class="instructions" style="text-align: center; margin-bottom: 30px;">Go to your roster page, click the "Copy Roster" bookmark, then come back and click the button below.</p>
+                <p class="instructions" style="text-align: center; margin-bottom: 25px;">Go to your roster page, click the "Copy Roster" bookmark, then come back and click the button below.</p>
                 <a href="#" id="magic-button" class="magic-button">
                     <span id="button-icon" class="icon">📋</span>
-                    <span id="button-text" class="text">Paste & Process</span>
                 </a>
             </div>
         </main>
@@ -171,48 +168,43 @@
             const bookmarkletLink = document.getElementById('bookmarklet-link');
             const magicButton = document.getElementById('magic-button');
             const buttonIcon = document.getElementById('button-icon');
-            const buttonText = document.getElementById('button-text');
             let isProcessed = false;
             
-            // Setup the copy bookmarklet
             const bookmarkletCode = `javascript:(function(){try{navigator.clipboard.writeText(document.body.innerText);alert('Roster text copied!\\n\\nNow go back to the RosterCal page and click the main button.');}catch(e){alert('Error: Could not copy text. Please try copying manually.');}})();`;
             bookmarkletLink.href = bookmarkletCode;
 
-            // Magic button logic
             magicButton.addEventListener('click', (event) => {
-                if (isProcessed) {
-                    return; // Let the browser handle the download click
-                }
-                event.preventDefault(); // Prevent navigation only on the first click
+                if (isProcessed) { return; }
+                event.preventDefault();
 
                 if (navigator.clipboard && navigator.clipboard.readText) {
                     navigator.clipboard.readText().then(text => {
                         if (!text) {
-                            alert("Clipboard is empty. Please use the 'Copy Roster' bookmarklet on your roster page first.");
+                            alert("Clipboard is empty. Please use the 'Copy Roster' bookmarklet first.");
                             return;
                         }
+                        
                         const events = parsePlainTextForRosterEvents(text);
                         if (!events || events.length === 0) {
                             buttonIcon.innerText = '❌';
-                            buttonText.innerText = 'Failed';
+                            setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
                             return;
                         }
+                        
                         const icsContent = generateIcsFile(events);
                         const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
                         const url = URL.createObjectURL(file);
                         
                         buttonIcon.innerText = '✔️';
-                        buttonText.innerText = 'Download File';
                         magicButton.classList.add('success');
                         magicButton.href = url;
                         magicButton.setAttribute('download', 'MyRoster.ics');
                         isProcessed = true;
                         
                     }).catch(err => {
-                        console.error('Failed to read clipboard: ', err);
                         alert('Could not read clipboard. Please allow permission and try again.');
                         buttonIcon.innerText = '❌';
-                        buttonText.innerText = 'Permission Denied';
+                        setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
                     });
                 } else {
                     alert("Clipboard API not available. This tool works best on modern browsers.");
