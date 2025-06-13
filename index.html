@@ -4,46 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RosterCal</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --emirates-red: #d71921;
             --emirates-gold: #c4a647;
-            --dark-grey: #333333;
-            --light-grey: #f4f5f7;
-            --white: #ffffff;
             --green: #28a745;
             --font-main: 'Montserrat', sans-serif;
+
+            /* Light Mode (Default) */
+            --color-bg: #f4f5f7;
+            --color-surface: #ffffff;
+            --color-text: #333333;
+            --color-text-secondary: #6c757d;
+            --color-header-bg: #333333;
+            --color-header-text: #ffffff;
+            --color-header-span: #cccccc;
+            --color-border: #e0e0e0;
+            --color-details-bg: #fafafa;
+            --color-summary-action: var(--emirates-red);
+            
+            color-scheme: light dark;
         }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-bg: #121212;
+                --color-surface: #1e1e1e;
+                --color-text: #e1e1e1;
+                --color-text-secondary: #888888;
+                --color-header-bg: #1e1e1e;
+                --color-header-text: #e1e1e1;
+                --color-header-span: #888888;
+                --color-border: #3a3a3a;
+                --color-details-bg: #2c2c2c;
+                --color-summary-action: var(--emirates-gold);
+            }
+        }
+
         body {
             font-family: var(--font-main);
             margin: 0;
             padding: 40px 20px;
-            background-color: var(--light-grey);
-            color: var(--dark-grey);
-            line-height: 1.6;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            transition: background-color 0.3s, color 0.3s;
         }
         .container {
             width: 100%;
             max-width: 800px;
-            background-color: var(--white);
+            background-color: var(--color-surface);
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             overflow: hidden; 
             margin: 0 auto;
+            transition: background-color 0.3s;
         }
         .header {
             padding: 25px 30px;
-            background-color: var(--dark-grey);
+            background-color: var(--color-header-bg);
             text-align: center;
+            transition: background-color 0.3s;
         }
         .header h1 {
-            font-size: 2.2rem; font-weight: 700; margin: 0; color: var(--white);
+            font-size: 2.2rem; font-weight: 700; margin: 0; color: var(--color-header-text);
         }
         .header h1 span {
-            font-weight: 300; color: #ccc;
+            font-weight: 300; color: var(--color-header-span);
         }
         .main-content {
             padding: 30px;
@@ -55,20 +86,21 @@
         .step h2 {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--dark-grey);
+            color: var(--color-text);
             margin-bottom: 20px;
         }
         .step .instructions, .step li {
             font-size: 1rem;
-            color: #6c757d;
+            color: var(--color-text-secondary);
             text-align: left;
         }
         details {
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--color-border);
             border-radius: 8px;
             margin-bottom: 40px;
-            background-color: #fafafa;
+            background-color: var(--color-details-bg);
             text-align: left;
+            transition: background-color 0.3s, border-color 0.3s;
         }
         summary {
             cursor: pointer;
@@ -84,19 +116,20 @@
         summary::after {
             content: 'Show ▼';
             font-size: 0.9rem;
-            color: var(--emirates-red);
+            color: var(--color-summary-action);
             font-weight: bold;
         }
         details[open] summary::after { content: 'Hide ▲'; }
         .details-content {
             padding: 0 15px 15px 15px;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid var(--color-border);
+            transition: border-color 0.3s;
         }
         .bookmarklet-link {
             display: inline-block;
             padding: 10px 20px;
             background-color: var(--emirates-red);
-            color: var(--white);
+            color: #ffffff;
             border-radius: 8px;
             font-weight: bold;
             text-decoration: none;
@@ -111,12 +144,11 @@
             height: 90px;
             border-radius: 50%;
             background-color: var(--emirates-red);
-            color: var(--white);
+            color: #ffffff;
             text-decoration: none;
             cursor: pointer;
             transition: background-color 0.3s, transform 0.2s;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            border: 4px solid var(--white);
         }
         .magic-button:hover { transform: scale(1.1); }
         .magic-button .icon { font-size: 2.5rem; line-height: 1; transition: transform 0.3s ease-in-out; }
@@ -124,6 +156,7 @@
     </style>
 </head>
 <body>
+
     <div class="container">
         <header class="header">
             <h1><span>Roster</span>Cal</h1>
@@ -132,7 +165,7 @@
             <details>
                 <summary>Bookmarklet Setup</summary>
                 <div class="details-content">
-                    <p class="instructions" style="margin-top: 15px;">To easily copy your roster (especially on iPhone), set up this bookmarklet once.</p>
+                    <p class="instructions" style="margin-top: 15px;">To easily copy your roster, set up this bookmarklet once.</p>
                     <ol>
                         <li>Press and hold the link below: <br>
                             <a href="#" id="bookmarklet-link" class="bookmarklet-link">Copy Roster</a>
@@ -143,9 +176,6 @@
             </details>
             <div class="step">
                 <h2>Process Your Roster</h2>
-                <p class="instructions" style="text-align: center; margin-bottom: 25px;">
-                    Click the "Copy Roster" bookmark on your roster page, then come back and click the button below.
-                </p>
                 <a href="#" id="magic-button" class="magic-button">
                     <span id="button-icon" class="icon">📋</span>
                 </a>
@@ -167,43 +197,35 @@
                 if (isProcessed) { return; }
                 event.preventDefault();
 
-                if (navigator.clipboard && navigator.clipboard.readText) {
-                    navigator.clipboard.readText().then(text => {
-                        if (!text) {
-                            alert("Clipboard is empty. Please use the 'Copy Roster' bookmarklet first.");
-                            return;
-                        }
-                        
-                        const events = parsePlainTextForRosterEvents(text);
-                        if (!events || events.length === 0) {
-                            buttonIcon.innerText = '❌';
-                            setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
-                            return;
-                        }
-                        
-                        const icsContent = generateIcsFile(events);
-                        const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                        const url = URL.createObjectURL(file);
-                        
-                        buttonIcon.innerText = '✔️';
-                        magicButton.classList.add('success');
-                        isProcessed = true;
-                        magicButton.href = url;
-                        magicButton.setAttribute('download', 'MyRoster.ics');
-
-                        setTimeout(() => {
-                            buttonIcon.style.transform = 'rotate(360deg)';
-                            buttonIcon.innerText = '⬇️';
-                        }, 1000); 
-                        
-                    }).catch(err => {
-                        alert('Could not read clipboard. Please allow permission and try again.');
+                navigator.clipboard.readText().then(text => {
+                    if (!text) {
+                        alert("Clipboard is empty. Please use the 'Copy Roster' bookmarklet first.");
+                        return;
+                    }
+                    const events = parsePlainTextForRosterEvents(text);
+                    if (!events || events.length === 0) {
                         buttonIcon.innerText = '❌';
                         setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
-                    });
-                } else {
-                    alert("Clipboard API not available. This tool works best on modern browsers.");
-                }
+                        return;
+                    }
+                    const icsContent = generateIcsFile(events);
+                    const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                    const url = URL.createObjectURL(file);
+                    
+                    buttonIcon.innerText = '✔️';
+                    magicButton.classList.add('success');
+                    isProcessed = true;
+                    magicButton.href = url;
+                    magicButton.setAttribute('download', 'MyRoster.ics');
+                    setTimeout(() => {
+                        buttonIcon.style.transform = 'rotate(360deg)';
+                        buttonIcon.innerText = '⬇️';
+                    }, 1000); 
+                }).catch(err => {
+                    alert('Could not read clipboard. Please allow permission and try again.');
+                    buttonIcon.innerText = '❌';
+                    setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
+                });
             });
         });
 
