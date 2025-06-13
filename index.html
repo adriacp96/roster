@@ -1,33 +1,15 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creador de Calendario de Roster</title>
+    <title>Roster Calendar Creator</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- DEMO: Carga de la fuente oficial de Emirates (NO RECOMENDADO) --- */
-        /* Esto puede dejar de funcionar si Emirates cambia la URL de sus fuentes */
-        @font-face {
-            font-family: 'Emirates';
-            src: url('https://c.ekstatic.net/shared/fonts/emirates/emirates-light-v3.woff2') format('woff2');
-            font-weight: 300;
-            font-style: normal;
-        }
-        @font-face {
-            font-family: 'Emirates';
-            src: url('https://c.ekstatic.net/shared/fonts/emirates/emirates-regular-v3.woff2') format('woff2');
-            font-weight: 400;
-            font-style: normal;
-        }
-        @font-face {
-            font-family: 'Emirates';
-            src: url('https://c.ekstatic.net/shared/fonts/emirates/emirates-bold-v3.woff2') format('woff2');
-            font-weight: 700;
-            font-style: normal;
-        }
-        /* --- Fin de la sección no recomendada --- */
-
         :root {
             --emirates-red: #d71921;
             --emirates-gold: #c4a647;
@@ -35,12 +17,11 @@
             --light-grey: #f4f5f7;
             --medium-grey: #e0e0e0;
             --white: #ffffff;
-            --font-main: 'Emirates', sans-serif; /* <-- Aplicación de la fuente Emirates */
+            --font-main: 'Montserrat', sans-serif;
         }
 
         body {
             font-family: var(--font-main);
-            font-weight: 400; /* Usar el peso regular por defecto */
             margin: 0;
             padding: 40px 20px;
             background-color: var(--light-grey);
@@ -69,13 +50,13 @@
         
         .header h1 {
             font-size: 2.5rem;
-            font-weight: 700; /* Bold */
+            font-weight: 700;
             margin: 0;
             color: var(--dark-grey);
         }
 
         .header h1 span {
-            font-weight: 300; /* Light */
+            font-weight: 300;
         }
 
         .main-content {
@@ -117,7 +98,7 @@
             border-radius: 8px;
             font-family: var(--font-main);
             font-size: 1.1rem;
-            font-weight: 700; /* Bold */
+            font-weight: bold;
             cursor: pointer;
             transition: background-color 0.3s, transform 0.2s;
             display: flex;
@@ -144,7 +125,7 @@
             color: white;
             text-decoration: none;
             border-radius: 8px;
-            font-weight: 700; /* Bold */
+            font-weight: bold;
             transition: background-color 0.3s, transform 0.2s;
             transform-origin: center;
         }
@@ -171,30 +152,30 @@
         </header>
         
         <main class="main-content">
-            <p>Pega el texto de tu roster para convertirlo a un archivo de calendario.</p>
+            <p>Paste your roster text below to convert it into a calendar file.</p>
             
-            <textarea id="html-input" placeholder="Pega el texto de tu roster aquí..."></textarea>
+            <textarea id="html-input" placeholder="Paste your roster text here..."></textarea>
             
             <button id="process-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-calendar-plus" viewBox="0 0 16 16">
                     <path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/>
                     <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
                 </svg>
-                Generar Archivo .ics
+                Generate .ics File
             </button>
             
             <div id="download-area">
-                <a id="download-link" href="#" download="MyRoster.ics">Descargar Archivo</a>
+                <a id="download-link" href="#" download="MyRoster.ics">Download File</a>
             </div>
         </main>
         
         <footer>
-            <p>&copy; 2025 - Creado para uso personal. No afiliado con The Emirates Group.</p>
+            <p>&copy; 2025 - Created for personal use. Not affiliated with The Emirates Group.</p>
         </footer>
     </div>
 
     <script>
-        // --- LA LÓGICA DE JAVASCRIPT ES IDÉNTICA Y NO NECESITA CAMBIOS ---
+        // --- DATA MAPS ---
         const timeZoneOffsets = {
             'ABJ': 0, 'ABV': 1, 'ACC': 0, 'ADD': 3, 'ADL': 9.5, 'AKL': 12, 'ALG': 1, 'AMD': 5.5, 'AMM': 3, 'AMS': 2, 'ARN': 2, 'ATH': 3, 'ATL': -4, 'BAH': 3, 'BBI': 5.5, 'BCN': 2, 'BEY': 3, 'BGI': -4, 'BGW': 3, 'BHX': 1, 'BKK': 7, 'BLQ': 2, 'BLR': 5.5, 'BNE': 10, 'BOG': -5, 'BOM': 5.5, 'BOS': -4, 'BRU': 2, 'BSB': -3, 'BSR': 3, 'BUD': 2, 'CAI': 3, 'CAN': 8, 'CCJ': 5.5, 'CCU': 5.5, 'CDG': 2, 'CEB': 8, 'CGK': 7, 'CHC': 12, 'CKY': 0, 'CMB': 5.5, 'CMN': 1, 'COK': 5.5, 'CPH': 2, 'CPT': 2, 'CRK': 8, 'DAC': 6, 'DAR': 3, 'DEL': 5.5, 'DEN': -6, 'DFW': -5, 'DJE': 1, 'DME': 3, 'DMM': 3, 'DOH': 3, 'DPS': 8, 'DSS': 0, 'DUB': 1, 'DUR': 2, 'DUS': 2, 'DXB': 4, 'EBB': 3, 'EDI': 1, 'EWR': -4, 'EZE': -3, 'FCO': 2, 'FRA': 2, 'GIG': -3, 'GLA': 1, 'GOT': 2, 'GRU': -3, 'GVA': 2, 'GYD': 4, 'HAM': 2, 'HAN': 7, 'HBE': 3, 'HEL': 3, 'HGH': 8, 'HKG': 8, 'HKT': 7, 'HND': 9, 'HRE': 2, 'HYD': 5.5, 'IAD': -4, 'IAH': -5, 'ICN': 9, 'IKA': 3.5, 'ISB': 5, 'IST': 3, 'JED': 3, 'JFK': -4, 'JNB': 2, 'KHI': 5, 'KIX': 9, 'KRT': 2, 'KUL': 8, 'KWI': 3, 'LAD': 1, 'LAX': -7, 'LCA': 3, 'LED': 3, 'LGW': 1, 'LHE': 5, 'LHR': 1, 'LIS': 1, 'LOS': 1, 'LUN': 2, 'LYS': 2, 'MAA': 5.5, 'MAD': 2, 'MAN': 1, 'MCO': -4, 'MCT': 4, 'MED': 3, 'MEL': 10, 'MEX': -6, 'MIA': -4, 'MLA': 2, 'MLE': 5, 'MNL': 8, 'MPM': 2, 'MRU': 4, 'MUC': 2, 'MXP': 2, 'NBO': 3, 'NCE': 2, 'NCL': 1, 'NDJ': 1, 'NRT': 9, 'ORD': -5, 'OSL': 2, 'OTP': 3, 'PER': 8, 'PEW': 5, 'PNH': 7, 'PRG': 2, 'PVG': 8, 'RUH': 3, 'SAW': 3, 'SEA': -7, 'SEZ': 4, 'SFO': -7, 'SGN': 7, 'SIN': 8, 'SKT': 5, 'STN': 1, 'SZX': 8, 'SYD': 10, 'TNR': 3, 'TPE': 8, 'TLV': 3, 'TRV': 5.5, 'TUN': 1, 'VCE': 2, 'VIE': 2, 'WAW': 2, 'YYC': -6, 'YUL': -4, 'YYZ': -4, 'ZAG': 2, 'ZRH': 2
         };
@@ -211,7 +192,7 @@
                 if (duty.depSt === 'DXB') {
                     finalEvents.push({
                         title: '🕑 REPORT',
-                        description: `Reporte para el vuelo EK${duty.flightNum} a ${duty.arrSt}`,
+                        description: `Report for flight EK${duty.flightNum} to ${duty.arrSt}`,
                         location: duty.depSt,
                         startTime: duty.reportTime,
                         endTime: new Date(duty.reportTime.getTime() + 90 * 60 * 1000)
@@ -222,7 +203,7 @@
                 const arrName = airportNames[duty.arrSt] || duty.arrSt;
                 finalEvents.push({
                     title: `✈️ ${depName} (${duty.depSt}) - ${arrName} (${duty.arrSt})`,
-                    description: `Vuelo EK${duty.flightNum}. Duración: ${duty.durationStr}.`,
+                    description: `Flight EK${duty.flightNum}. Duration: ${duty.durationStr}.`,
                     location: `${duty.depSt}-${duty.arrSt}`,
                     startTime: duty.departureTime,
                     endTime: duty.arrivalTime
@@ -241,7 +222,7 @@
                             const formattedDuration = `${hours}:${String(minutes).padStart(2, '0')}`;
                             finalEvents.push({
                                 title: `💼 Layover (${formattedDuration} hours)`,
-                                description: `Estancia en ${duty.arrSt}. Duración total: ${formattedDuration} horas.`,
+                                description: `Layover in ${duty.arrSt}. Total duration: ${formattedDuration} hours.`,
                                 location: duty.arrSt,
                                 startTime: layoverStart,
                                 endTime: layoverEnd
@@ -259,7 +240,7 @@
             const lines = text.split('\n');
             const dateRangeMatch = text.match(/(\d{1,2})-(\d{1,2})-(\d{4})\s+to/);
             if (!dateRangeMatch) {
-                alert("Error: No se pudo determinar el mes y año. Asegúrate de copiar la línea de fecha (ej: '1-8-2024 to 31-8-2024').");
+                alert("Error: Could not determine the roster's month and year. Make sure to copy the date line (e.g., '1-8-2024 to 31-8-2024').");
                 return [];
             }
             const month = parseInt(dateRangeMatch[2], 10);
@@ -291,7 +272,7 @@
                 if (dutyInfo) {
                     const offset = timeZoneOffsets[dutyInfo.depSt];
                     if (offset === undefined) {
-                        alert(`Error: Zona horaria no encontrada para ${dutyInfo.depSt}.`); continue;
+                        alert(`Error: Timezone not found for ${dutyInfo.depSt}.`); continue;
                     }
                     const createUTCDate = (day, timeStr) => {
                         const [h, m] = timeStr.split(':').map(Number);
@@ -385,19 +366,19 @@
         document.getElementById('process-btn').addEventListener('click', () => {
             const textInput = document.getElementById('html-input').value;
             if (!textInput) {
-                alert("Por favor, pega el texto de tu roster primero.");
+                alert("Please paste your roster text first.");
                 return;
             }
             const events = parsePlainTextForRosterEvents(textInput);
             if (!events || events.length === 0) {
-                alert("No se pudieron encontrar eventos en el texto. Revisa que esté copiado correctamente.");
+                alert("Could not find any events in the text. Please check if it was copied correctly.");
                 return;
             }
             const icsContent = generateIcsFile(events);
             const downloadLink = document.getElementById('download-link');
             const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
             downloadLink.href = URL.createObjectURL(file);
-            alert(`${events.length} eventos están listos. Haz click en el enlace de descarga.`);
+            alert(`${events.length} events are ready. Click the download link.`);
             downloadLink.style.display = 'inline-block';
         });
     </script>
