@@ -21,7 +21,7 @@
         body {
             font-family: var(--font-main);
             margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
             background-color: var(--light-grey);
             color: var(--dark-grey);
             line-height: 1.6;
@@ -57,17 +57,19 @@
             font-weight: 700;
             color: var(--dark-grey);
             margin-bottom: 20px;
+            text-align: center;
         }
         .step .instructions, .step li {
             font-size: 1rem;
             color: #6c757d;
         }
         
-        /* Estilos para el desplegable de instrucciones */
+        /* Dropdown styles */
         details {
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             margin-bottom: 25px;
+            background-color: #fafafa;
         }
         summary {
             cursor: pointer;
@@ -75,18 +77,19 @@
             font-size: 1.1rem;
             font-weight: 700;
             color: var(--dark-grey);
-            list-style: none; /* Ocultar el marcador por defecto */
+            list-style: none;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         summary::-webkit-details-marker {
-            display: none; /* Ocultar en Safari */
+            display: none;
         }
         summary::after {
             content: 'Show ▼';
             font-size: 0.9rem;
             color: var(--emirates-red);
+            font-weight: bold;
         }
         details[open] summary::after {
             content: 'Hide ▲';
@@ -94,6 +97,18 @@
         .details-content {
             padding: 0 15px 15px 15px;
             border-top: 1px solid #e0e0e0;
+        }
+        .bookmarklet-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--emirates-red);
+            color: var(--white);
+            border-radius: 8px;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            cursor: move;
+            margin-top: 10px;
         }
         
         textarea {
@@ -158,27 +173,22 @@
         <main class="main-content">
             
             <details>
-                <summary>Bookmarklet Setup & Instructions</summary>
+                <summary>Bookmarklet Setup Instructions</summary>
                 <div class="details-content">
-                    <p class="instructions">Use a bookmarklet to instantly copy your roster text. Set it up once, and you're done!</p>
-                    <h4>Setup on Computer:</h4>
+                    <p class="instructions" style="margin-top: 15px;">Use this bookmark to **instantly copy** your roster text. The setup is the same for computer and iPhone/iPad.</p>
                     <ol>
-                        <li>Drag this link to your bookmarks bar: <a href="#" id="bookmarklet-link" style="color: var(--emirates-red); font-weight:bold;">Copy Roster</a></li>
+                        <li>Press and hold the link below: <br>
+                            <a href="#" id="bookmarklet-link" class="bookmarklet-link">Copy Roster</a>
+                        </li>
+                        <li>Drag it to your Bookmarks Bar or Favorites.</li>
+                        <li>(Optional) Rename it to whatever you like.</li>
                     </ol>
-                    <h4>Setup on iPhone/iPad:</h4>
-                    <ol>
-                        <li>Bookmark this page.</li>
-                        <li>Edit the bookmark, rename it to `Copy Roster`.</li>
-                        <li>Clear the address and paste the code below.</li>
-                    </ol>
-                    <textarea id="bookmarklet-code" readonly style="height: 80px; font-size: 11px;"></textarea>
-                    <button id="copy-code-btn" style="width: auto; padding: 8px 15px; font-size: 0.9rem; margin-top: 5px;">Copy Code for iPhone</button>
                 </div>
             </details>
             
             <div class="step">
                 <h2>Process Your Roster</h2>
-                <p class="instructions">Go to the roster page, click your "Copy Roster" bookmark, then come back here and paste into the box below.</p>
+                <p class="instructions">Go to your roster page, click the "Copy Roster" bookmark, then come back here and paste in the box below.</p>
                 <textarea id="roster-input" placeholder="Paste your roster text here..."></textarea>
                 <button id="process-btn">Generate .ics File</button>
                  <div id="download-area">
@@ -190,19 +200,12 @@
     <script>
         // --- PAGE LOGIC & BOOKMARKLET ---
         document.addEventListener('DOMContentLoaded', () => {
-            const bookmarkletCodeTextarea = document.getElementById('bookmarklet-code');
             const bookmarkletLink = document.getElementById('bookmarklet-link');
             
+            // This is the bookmarklet code. It's simple and reliable.
             const bookmarkletCode = `javascript:(function(){try{navigator.clipboard.writeText(document.body.innerText);alert('Roster text copied!\\n\\nNow go back to the RosterCal page and paste.');}catch(e){alert('Error: Could not copy text. Please try copying manually.');}})();`;
             
-            bookmarkletCodeTextarea.value = bookmarkletCode;
             bookmarkletLink.href = bookmarkletCode;
-
-            document.getElementById('copy-code-btn').addEventListener('click', () => {
-                bookmarkletCodeTextarea.select();
-                document.execCommand('copy');
-                alert('Code copied to clipboard! Now edit your bookmark and paste this in the address field.');
-            });
 
             document.getElementById('process-btn').addEventListener('click', () => {
                 const text = document.getElementById('roster-input').value;
