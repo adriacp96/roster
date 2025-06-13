@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roster Calendar Creator</title>
+    <title>RosterCal</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,8 +65,15 @@
             color: #6c757d;
             text-align: left;
         }
+        .step .instructions a {
+            color: var(--emirates-red);
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .step .instructions a:hover {
+            text-decoration: underline;
+        }
         
-        /* Dropdown styles */
         details {
             border: 1px solid #e0e0e0;
             border-radius: 8px;
@@ -108,7 +115,6 @@
             margin-top: 10px;
         }
         
-        /* Magic Button styles */
         .magic-button {
             display: inline-flex;
             align-items: center;
@@ -154,7 +160,9 @@
             
             <div class="step">
                 <h2>Process Your Roster</h2>
-                <p class="instructions" style="text-align: center; margin-bottom: 25px;">Go to your roster page, click the "Copy Roster" bookmark, then come back and click the button below.</p>
+                <p class="instructions" style="text-align: center; margin-bottom: 25px;">
+                    Go to your roster <a href="https://emiratesgroup.sharepoint.com/sites/ccp/roster/Pages/Roster.aspx" target="_blank" rel="noopener noreferrer">page</a>, click the "Copy Roster" bookmark, then come back and click the button below.
+                </p>
                 <a href="#" id="magic-button" class="magic-button">
                     <span id="button-icon" class="icon">📋</span>
                 </a>
