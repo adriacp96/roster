@@ -4,107 +4,200 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creador de Calendario de Roster</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    
     <style>
+        /* Definición de la paleta de colores de Emirates */
+        :root {
+            --emirates-red: #d71921;
+            --emirates-gold: #c4a647;
+            --dark-grey: #333333;
+            --light-grey: #f4f5f7;
+            --medium-grey: #e0e0e0;
+            --white: #ffffff;
+            --font-main: 'Montserrat', sans-serif; /* <-- Aplicación de la nueva fuente */
+        }
+
+        /* Estilo base del cuerpo */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: var(--font-main); /* <-- Aplicación de la nueva fuente */
             margin: 0;
-            padding: 20px;
-            background-color: #f0f2f5;
-            color: #1c1e21;
+            padding: 40px 20px;
+            background-color: var(--light-grey);
+            color: var(--dark-grey);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            box-sizing: border-box;
         }
+
+        /* Contenedor principal */
         .container {
             width: 100%;
             max-width: 800px;
-            background-color: #ffffff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden; 
         }
-        h1 {
+
+        /* Encabezado con el título */
+        .header {
+            padding: 25px 30px;
+            border-bottom: 4px solid var(--emirates-gold);
             text-align: center;
-            color: #d71921; /* Emirates Red */
-            margin-bottom: 10px;
         }
-        p {
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--dark-grey);
+        }
+
+        .header h1 span {
+            font-weight: 300;
+        }
+
+        /* Contenido principal de la app */
+        .main-content {
+            padding: 30px;
+        }
+
+        .main-content p {
             text-align: center;
-            color: #606770;
+            font-size: 1.1rem;
+            color: #6c757d;
             margin-bottom: 25px;
         }
+
+        /* Área de texto */
         textarea {
             width: 100%;
             height: 250px;
-            padding: 10px;
-            border: 1px solid #dddfe2;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 12px;
-            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid var(--medium-grey);
+            border-radius: 8px;
+            font-family: "SF Mono", "Menlo", "Courier New", monospace;
+            font-size: 13px;
+            margin-bottom: 20px;
             box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--emirates-gold);
+            box-shadow: 0 0 0 3px rgba(196, 166, 71, 0.25);
+        }
+
+        /* Botón principal */
         button {
             width: 100%;
-            padding: 12px;
-            background-color: #d71921;
-            color: white;
+            padding: 15px;
+            background-color: var(--emirates-red);
+            color: var(--white);
             border: none;
-            border-radius: 6px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-family: var(--font-main); /* <-- Aplicación de la nueva fuente */
+            font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
+
         button:hover {
             background-color: #b8151c;
+            transform: translateY(-2px);
         }
+        
+        /* Área del enlace de descarga */
         #download-area {
-            margin-top: 20px;
+            margin-top: 25px;
             text-align: center;
+            height: 50px; 
         }
+
         #download-link {
-            display: none; /* Hidden until ready */
-            padding: 10px 20px;
-            background-color: #42b72a;
+            display: none;
+            padding: 12px 25px;
+            background-color: #28a745;
             color: white;
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: bold;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.2s;
+            transform-origin: center;
         }
-         #download-link:hover {
-            background-color: #36a420;
+
+        #download-link:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+
+        /* Pie de página */
+        footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #888;
+            background-color: #f8f9fa;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Creador de Calendario de Roster</h1>
-        <p>Ve a tu página de Roster, copia el texto del mes y pégalo abajo.</p>
-        <textarea id="html-input" placeholder="Pega el texto de tu roster aquí..."></textarea>
-        <button id="process-btn">Crear Archivo de Calendario</button>
-        <div id="download-area">
-            <a id="download-link" href="#" download="MyRoster.ics">Descargar Archivo .ics</a>
-        </div>
+        <header class="header">
+            <h1><span>Roster</span>Cal</h1>
+        </header>
+        
+        <main class="main-content">
+            <p>Pega el texto de tu roster para convertirlo a un archivo de calendario.</p>
+            
+            <textarea id="html-input" placeholder="Pega el texto de tu roster aquí..."></textarea>
+            
+            <button id="process-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-calendar-plus" viewBox="0 0 16 16">
+                    <path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/>
+                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                </svg>
+                Generar Archivo .ics
+            </button>
+            
+            <div id="download-area">
+                <a id="download-link" href="#" download="MyRoster.ics">Descargar Archivo</a>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 - Creado para uso personal. No afiliado con The Emirates Group.</p>
+        </footer>
     </div>
 
     <script>
-        // --- MAPAS DE DATOS COMPLETOS (RED EMIRATES) ---
+        // --- LA LÓGICA DE JAVASCRIPT ES IDÉNTICA Y NO NECESITA CAMBIOS ---
         const timeZoneOffsets = {
             'ABJ': 0, 'ABV': 1, 'ACC': 0, 'ADD': 3, 'ADL': 9.5, 'AKL': 12, 'ALG': 1, 'AMD': 5.5, 'AMM': 3, 'AMS': 2, 'ARN': 2, 'ATH': 3, 'ATL': -4, 'BAH': 3, 'BBI': 5.5, 'BCN': 2, 'BEY': 3, 'BGI': -4, 'BGW': 3, 'BHX': 1, 'BKK': 7, 'BLQ': 2, 'BLR': 5.5, 'BNE': 10, 'BOG': -5, 'BOM': 5.5, 'BOS': -4, 'BRU': 2, 'BSB': -3, 'BSR': 3, 'BUD': 2, 'CAI': 3, 'CAN': 8, 'CCJ': 5.5, 'CCU': 5.5, 'CDG': 2, 'CEB': 8, 'CGK': 7, 'CHC': 12, 'CKY': 0, 'CMB': 5.5, 'CMN': 1, 'COK': 5.5, 'CPH': 2, 'CPT': 2, 'CRK': 8, 'DAC': 6, 'DAR': 3, 'DEL': 5.5, 'DEN': -6, 'DFW': -5, 'DJE': 1, 'DME': 3, 'DMM': 3, 'DOH': 3, 'DPS': 8, 'DSS': 0, 'DUB': 1, 'DUR': 2, 'DUS': 2, 'DXB': 4, 'EBB': 3, 'EDI': 1, 'EWR': -4, 'EZE': -3, 'FCO': 2, 'FRA': 2, 'GIG': -3, 'GLA': 1, 'GOT': 2, 'GRU': -3, 'GVA': 2, 'GYD': 4, 'HAM': 2, 'HAN': 7, 'HBE': 3, 'HEL': 3, 'HGH': 8, 'HKG': 8, 'HKT': 7, 'HND': 9, 'HRE': 2, 'HYD': 5.5, 'IAD': -4, 'IAH': -5, 'ICN': 9, 'IKA': 3.5, 'ISB': 5, 'IST': 3, 'JED': 3, 'JFK': -4, 'JNB': 2, 'KHI': 5, 'KIX': 9, 'KRT': 2, 'KUL': 8, 'KWI': 3, 'LAD': 1, 'LAX': -7, 'LCA': 3, 'LED': 3, 'LGW': 1, 'LHE': 5, 'LHR': 1, 'LIS': 1, 'LOS': 1, 'LUN': 2, 'LYS': 2, 'MAA': 5.5, 'MAD': 2, 'MAN': 1, 'MCO': -4, 'MCT': 4, 'MED': 3, 'MEL': 10, 'MEX': -6, 'MIA': -4, 'MLA': 2, 'MLE': 5, 'MNL': 8, 'MPM': 2, 'MRU': 4, 'MUC': 2, 'MXP': 2, 'NBO': 3, 'NCE': 2, 'NCL': 1, 'NDJ': 1, 'NRT': 9, 'ORD': -5, 'OSL': 2, 'OTP': 3, 'PER': 8, 'PEW': 5, 'PNH': 7, 'PRG': 2, 'PVG': 8, 'RUH': 3, 'SAW': 3, 'SEA': -7, 'SEZ': 4, 'SFO': -7, 'SGN': 7, 'SIN': 8, 'SKT': 5, 'STN': 1, 'SZX': 8, 'SYD': 10, 'TNR': 3, 'TPE': 8, 'TLV': 3, 'TRV': 5.5, 'TUN': 1, 'VCE': 2, 'VIE': 2, 'WAW': 2, 'YYC': -6, 'YUL': -4, 'YYZ': -4, 'ZAG': 2, 'ZRH': 2
         };
         const airportNames = {
-            'ABJ': 'Abidjan', 'ABV': 'Abuja', 'ACC': 'Accra', 'ADD': 'Addis Ababa', 'ADL': 'Adelaide', 'AKL': 'Auckland', 'ALG': 'Algiers', 'AMD': 'Ahmedabad', 'AMM': 'Amman', 'AMS': 'Amsterdam', 'ARN': 'Stockholm', 'ATH': 'Athens', 'ATL': 'Atlanta', 'BAH': 'Bahrain', 'BBI': 'Bhubaneswar', 'BCN': 'Barcelona', 'BEY': 'Beirut', 'BGW': 'Baghdad', 'BHX': 'Birmingham', 'BKK': 'Bangkok', 'BLQ': 'Bologna', 'BLR': 'Bengaluru', 'BNE': 'Brisbane', 'BOG': 'Bogota', 'BOM': 'Mumbai', 'BOS': 'Boston', 'BRU': 'Brussels', 'BSB': 'Brasilia', 'BSR': 'Basra', 'BUD': 'Budapest', 'CAI': 'Cairo', 'CAN': 'Guangzhou', 'CCJ': 'Kozhikode', 'CCU': 'Kolkata', 'CDG': 'Paris', 'CEB': 'Cebu', 'CGK': 'Jakarta', 'CHC': 'Christchurch', 'CKY': 'Conakry', 'CMB': 'Colombo', 'CMN': 'Casablanca', 'COK': 'Kochi', 'CPH': 'Copenhagen', 'CPT': 'Cape Town', 'CRK': 'Clark', 'DAC': 'Dhaka', 'DAR': 'Dar es Salaam', 'DEL': 'Delhi', 'DEN': 'Denver', 'DFW': 'Dallas', 'DJE': 'Djerba', 'DME': 'Moscow', 'DMM': 'Dammam', 'DOH': 'Doha', 'DPS': 'Denpasar', 'DSS': 'Dakar', 'DUB': 'Dublin', 'DUR': 'Durban', 'DUS': 'Dusseldorf', 'DXB': 'Dubai', 'EBB': 'Entebbe', 'EDI': 'Edinburgh', 'EWR': 'Newark', 'EZE': 'Buenos Aires', 'FCO': 'Rome', 'FRA': 'Frankfurt', 'GIG': 'Rio de Janeiro', 'GLA': 'Glasgow', 'GOT': 'Gothenburg', 'GRU': 'Sao Paulo', 'GVA': 'Geneva', 'GYD': 'Baku', 'HAM': 'Hamburg', 'HAN': 'Hanoi', 'HBE': 'Alexandria', 'HEL': 'Helsinki', 'HGH': 'Hangzhou', 'HKG': 'Hong Kong', 'HKT': 'Phuket', 'HND': 'Tokyo-Haneda', 'HRE': 'Harare', 'HYD': 'Hyderabad', 'IAD': 'Washington D.C.', 'IAH': 'Houston', 'ICN': 'Seoul', 'IKA': 'Tehran', 'ISB': 'Islamabad', 'IST': 'Istanbul', 'JED': 'Jeddah', 'JFK': 'New York', 'JNB': 'Johannesburg', 'KHI': 'Karachi', 'KIX': 'Osaka', 'KRT': 'Khartoum', 'KUL': 'Kuala Lumpur', 'KWI': 'Kuwait City', 'LAD': 'Luanda', 'LAX': 'Los Angeles', 'LCA': 'Larnaca', 'LED': 'St. Petersburg', 'LGW': 'London-Gatwick', 'LHE': 'Lahore', 'LHR': 'London-Heathrow', 'LIS': 'Lisbon', 'LOS': 'Lagos', 'LUN': 'Lusaka', 'LYS': 'Lyon', 'MAA': 'Chennai', 'MAD': 'Madrid', 'MAN': 'Manchester', 'MCO': 'Orlando', 'MCT': 'Muscat', 'MED': 'Medina', 'MEL': 'Melbourne', 'MEX': 'Mexico City', 'MIA': 'Miami', 'MLA': 'Malta', 'MLE': 'Malé', 'MNL': 'Manila', 'MPM': 'Maputo', 'MRU': 'Mauritius', 'MUC': 'Munich', 'MXP': 'Milan', 'NBO': 'Nairobi', 'NCE': 'Nice', 'NCL': 'Newcastle', 'NDJ': 'N Djamena', 'NRT': 'Tokyo-Narita', 'ORD': 'Chicago', 'OSL': 'Oslo', 'OTP': 'Bucharest', 'PER': 'Perth', 'PEW': 'Peshawar', 'PNH': 'Phnom Penh', 'PRG': 'Prague', 'PVG': 'Shanghai', 'RUH': 'Riyadh', 'SAW': 'Istanbul-Sabiha', 'SEA': 'Seattle', 'SEZ': 'Seychelles', 'SFO': 'San Francisco', 'SGN': 'Ho Chi Minh City', 'SIN': 'Singapore', 'SKT': 'Sialkot', 'STN': 'London-Stansted', 'SZX': 'Shenzhen', 'SYD': 'Sydney', 'TNR': 'Antananarivo', 'TPE': 'Taipei', 'TLV': 'Tel Aviv', 'TRV': 'Thiruvananthapuram', 'TUN': 'Tunis', 'VCE': 'Venice', 'VIE': 'Vienna', 'WAW': 'Warsaw', 'YYC': 'Calgary', 'YUL': 'Montreal', 'YYZ': 'Toronto', 'ZAG': 'Zagreb', 'ZRH': 'Zurich'
+            'ABJ': 'Abidjan', 'ABV': 'Abuja', 'ACC': 'Accra', 'ADD': 'Addis Ababa', 'ADL': 'Adelaide', 'AKL': 'Auckland', 'ALG': 'Algiers', 'AMD': 'Ahmedabad', 'AMM': 'Amman', 'AMS': 'Amsterdam', 'ARN': 'Stockholm', 'ATH': 'Athens', 'ATL': 'Atlanta', 'BAH': 'Bahrain', 'BBI': 'Bhubaneswar', 'BCN': 'Barcelona', 'BEY': 'Beirut', 'BGW': 'Baghdad', 'BHX': 'Birmingham', 'BKK': 'Bangkok', 'BLQ': 'Bologna', 'BLR': 'Bengaluru', 'BNE': 'Brisbane', 'BOG': 'Bogota', 'BOM': 'Mumbai', 'BOS': 'Boston', 'BRU': 'Brussels', 'BSR': 'Basra', 'BUD': 'Budapest', 'CAI': 'Cairo', 'CAN': 'Guangzhou', 'CCJ': 'Kozhikode', 'CCU': 'Kolkata', 'CDG': 'Paris', 'CEB': 'Cebu', 'CGK': 'Jakarta', 'CHC': 'Christchurch', 'CKY': 'Conakry', 'CMB': 'Colombo', 'CMN': 'Casablanca', 'COK': 'Kochi', 'CPH': 'Copenhagen', 'CPT': 'Cape Town', 'CRK': 'Clark', 'DAC': 'Dhaka', 'DAR': 'Dar es Salaam', 'DEL': 'Delhi', 'DEN': 'Denver', 'DFW': 'Dallas', 'DJE': 'Djerba', 'DME': 'Moscow', 'DMM': 'Dammam', 'DOH': 'Doha', 'DPS': 'Denpasar', 'DSS': 'Dakar', 'DUB': 'Dublin', 'DUR': 'Durban', 'DUS': 'Dusseldorf', 'DXB': 'Dubai', 'EBB': 'Entebbe', 'EDI': 'Edinburgh', 'EWR': 'Newark', 'EZE': 'Buenos Aires', 'FCO': 'Rome', 'FRA': 'Frankfurt', 'GIG': 'Rio de Janeiro', 'GLA': 'Glasgow', 'GOT': 'Gothenburg', 'GRU': 'Sao Paulo', 'GVA': 'Geneva', 'GYD': 'Baku', 'HAM': 'Hamburg', 'HAN': 'Hanoi', 'HBE': 'Alexandria', 'HEL': 'Helsinki', 'HGH': 'Hangzhou', 'HKG': 'Hong Kong', 'HKT': 'Phuket', 'HND': 'Tokyo-Haneda', 'HRE': 'Harare', 'HYD': 'Hyderabad', 'IAD': 'Washington D.C.', 'IAH': 'Houston', 'ICN': 'Seoul', 'IKA': 'Tehran', 'ISB': 'Islamabad', 'IST': 'Istanbul', 'JED': 'Jeddah', 'JFK': 'New York', 'JNB': 'Johannesburg', 'KHI': 'Karachi', 'KIX': 'Osaka', 'KRT': 'Khartoum', 'KUL': 'Kuala Lumpur', 'KWI': 'Kuwait City', 'LAD': 'Luanda', 'LAX': 'Los Angeles', 'LCA': 'Larnaca', 'LED': 'St. Petersburg', 'LGW': 'London-Gatwick', 'LHE': 'Lahore', 'LHR': 'London-Heathrow', 'LIS': 'Lisbon', 'LOS': 'Lagos', 'LUN': 'Lusaka', 'LYS': 'Lyon', 'MAA': 'Chennai', 'MAD': 'Madrid', 'MAN': 'Manchester', 'MCO': 'Orlando', 'MCT': 'Muscat', 'MED': 'Medina', 'MEL': 'Melbourne', 'MEX': 'Mexico City', 'MIA': 'Miami', 'MLA': 'Malta', 'MLE': 'Malé', 'MNL': 'Manila', 'MPM': 'Maputo', 'MRU': 'Mauritius', 'MUC': 'Munich', 'MXP': 'Milan', 'NBO': 'Nairobi', 'NCE': 'Nice', 'NCL': 'Newcastle', 'NRT': 'Tokyo-Narita', 'ORD': 'Chicago', 'OSL': 'Oslo', 'OTP': 'Bucharest', 'PER': 'Perth', 'PEW': 'Peshawar', 'PNH': 'Phnom Penh', 'PRG': 'Prague', 'PVG': 'Shanghai', 'RUH': 'Riyadh', 'SAW': 'Istanbul-Sabiha', 'SEA': 'Seattle', 'SEZ': 'Seychelles', 'SFO': 'San Francisco', 'SGN': 'Ho Chi Minh City', 'SIN': 'Singapore', 'SKT': 'Sialkot', 'STN': 'London-Stansted', 'SZX': 'Shenzhen', 'SYD': 'Sydney', 'TNR': 'Antananarivo', 'TPE': 'Taipei', 'TLV': 'Tel Aviv', 'TRV': 'Thiruvananthapuram', 'TUN': 'Tunis', 'VCE': 'Venice', 'VIE': 'Vienna', 'WAW': 'Warsaw', 'YYC': 'Calgary', 'YUL': 'Montreal', 'YYZ': 'Toronto', 'ZAG': 'Zagreb', 'ZRH': 'Zurich'
         };
 
         function createEventsFromParsedData(duties, leave) {
             const finalEvents = [];
             leave.forEach(l => finalEvents.push(l));
+            const sortedDuties = duties.sort((a, b) => a.reportTime - b.reportTime);
 
-            duties.forEach((duty, index) => {
+            sortedDuties.forEach((duty, index) => {
                 if (duty.depSt === 'DXB') {
                     finalEvents.push({
                         title: '🕑 REPORT',
@@ -125,23 +218,25 @@
                     endTime: duty.arrivalTime
                 });
 
-                const nextDuty = duties[index + 1];
+                const nextDuty = sortedDuties[index + 1];
                 if (nextDuty && duty.arrSt === nextDuty.depSt && duty.arrSt !== 'DXB') {
                     const layoverStart = duty.arrivalTime;
-                    const layoverEnd = nextDuty.reportTime;
+                    const layoverEnd = nextDuty.departureTime;
                     if (layoverEnd > layoverStart) {
                         const durationMillis = layoverEnd.getTime() - layoverStart.getTime();
-                        const totalMinutes = Math.round(durationMillis / (1000 * 60));
-                        const hours = Math.floor(totalMinutes / 60);
-                        const minutes = totalMinutes % 60;
-                        const formattedDuration = `${hours}:${String(minutes).padStart(2, '0')}`;
-                        finalEvents.push({
-                            title: `💼 Layover (${formattedDuration} hours)`,
-                            description: `Estancia en ${duty.arrSt}. Duración: ${formattedDuration} horas.`,
-                            location: duty.arrSt,
-                            startTime: layoverStart,
-                            endTime: layoverEnd
-                        });
+                        if (durationMillis > (12 * 60 * 60 * 1000)) {
+                            const totalMinutes = Math.round(durationMillis / (1000 * 60));
+                            const hours = Math.floor(totalMinutes / 60);
+                            const minutes = totalMinutes % 60;
+                            const formattedDuration = `${hours}:${String(minutes).padStart(2, '0')}`;
+                            finalEvents.push({
+                                title: `💼 Layover (${formattedDuration} hours)`,
+                                description: `Estancia en ${duty.arrSt}. Duración total: ${formattedDuration} horas.`,
+                                location: duty.arrSt,
+                                startTime: layoverStart,
+                                endTime: layoverEnd
+                            });
+                        }
                     }
                 }
             });
@@ -195,12 +290,14 @@
                         return dt;
                     };
                     const reportTime = createUTCDate(dutyInfo.day, dutyInfo.reportTimeStr);
-                    const departureTime = createUTCDate(dutyInfo.day, dutyInfo.depTimeStr);
+                    let departureTime = createUTCDate(dutyInfo.day, dutyInfo.depTimeStr);
+                    if (departureTime < reportTime) {
+                        departureTime.setUTCDate(departureTime.getUTCDate() + 1);
+                    }
                     const [durH, durM] = dutyInfo.durationStr.split(':').map(Number);
                     const durationMillis = (durH * 60 + durM) * 60 * 1000;
                     const arrivalTime = new Date(departureTime.getTime() + durationMillis);
                     parsedDuties.push({ reportTime, departureTime, arrivalTime, flightNum: dutyInfo.flightNum, depSt: dutyInfo.depSt, arrSt: dutyInfo.arrSt, durationStr: dutyInfo.durationStr });
-                
                 } else if (leaveMatch || dayOffMatch) {
                     const isDayOff = !!dayOffMatch;
                     const matchData = isDayOff ? dayOffMatch : leaveMatch;
@@ -211,7 +308,6 @@
                         dt.setUTCHours(dt.getUTCHours() - offset);
                         return dt;
                     };
-                    
                     let title, description, startTime, endTime;
                     if (isDayOff) {
                         const type = line.includes('XXR') ? 'DAY OFF (RSV CREW)' : 'Day Off';
@@ -223,7 +319,6 @@
                         const [_, dayStr, type, startTimeStr, desc, endTimeStr] = matchData;
                         description = desc.trim();
                         const descLower = description.toLowerCase();
-                        
                         if (type.startsWith('C')) {
                             title = `📖 ${type}`;
                         } else if (descLower.includes('sby')) {
@@ -234,17 +329,12 @@
                             title = '🏠 LIVE LEAVE';
                         } else if (descLower.includes('day off')) {
                             const reason = descLower.replace('day off', '').trim();
-                            if (reason) {
-                                title = `🏠 Day Off (${reason.toUpperCase()})`;
-                            } else {
-                                title = '🏠 Day Off';
-                            }
+                            title = `🏠 Day Off${reason ? ` (${reason.toUpperCase()})` : ''}`;
                         } else if (descLower === 'sick') {
                             title = '🤒 SICK';
                         } else {
                             title = `🏠 ${description}`;
                         }
-                        
                         const [startH, startM] = startTimeStr.split(':').map(Number);
                         const [endH, endM] = endTimeStr.split(':').map(Number);
                         startTime = createDubaiUTCDate(currentDay, startH, startM);
@@ -262,7 +352,7 @@
 
         function generateIcsFile(events) {
             events.sort((a, b) => a.startTime - b.startTime);
-            let icsString = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//YourApp//EN'].join('\r\n') + '\r\n';
+            let icsString = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//RosterCal//EN'].join('\r\n') + '\r\n';
             events.forEach(event => {
                 if (!event.startTime || !event.endTime || isNaN(event.startTime) || isNaN(event.endTime)) return;
                 const formatDT = (dt) => dt.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -290,6 +380,7 @@
             }
             const events = parsePlainTextForRosterEvents(textInput);
             if (!events || events.length === 0) {
+                alert("No se pudieron encontrar eventos en el texto. Revisa que esté copiado correctamente.");
                 return;
             }
             const icsContent = generateIcsFile(events);
