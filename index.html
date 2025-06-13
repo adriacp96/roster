@@ -13,29 +13,29 @@
         :root {
             --emirates-red: #d71921;
             --emirates-gold: #c4a647;
+            --dark-grey: #333333;
+            --light-grey: #f4f5f7;
+            --white: #ffffff;
             --green: #28a745;
             --font-main: 'Montserrat', sans-serif;
-
-            /* Light Mode (Default) */
-            --color-bg: #f4f5f7;
-            --color-surface: #ffffff;
-            --color-text: #333333;
+            --color-background: var(--light-grey);
+            --color-surface: var(--white);
+            --color-text-primary: var(--dark-grey);
             --color-text-secondary: #6c757d;
-            --color-header-bg: #333333;
-            --color-header-text: #ffffff;
-            --color-header-span: #cccccc;
             --color-border: #e0e0e0;
+            --color-header-bg: var(--dark-grey);
+            --color-header-text: var(--white);
+            --color-header-span: #cccccc;
             --color-details-bg: #fafafa;
             --color-summary-action: var(--emirates-red);
-            
             color-scheme: light dark;
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --color-bg: #121212;
+                --color-background: #121212;
                 --color-surface: #1e1e1e;
-                --color-text: #e1e1e1;
+                --color-text-primary: #e1e1e1;
                 --color-text-secondary: #888888;
                 --color-header-bg: #1e1e1e;
                 --color-header-text: #e1e1e1;
@@ -50,8 +50,8 @@
             font-family: var(--font-main);
             margin: 0;
             padding: 40px 20px;
-            background-color: var(--color-bg);
-            color: var(--color-text);
+            background-color: var(--color-background);
+            color: var(--color-text-primary);
             transition: background-color 0.3s, color 0.3s;
         }
         .container {
@@ -86,14 +86,24 @@
         .step h2 {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--color-text);
+            color: var(--color-text-primary);
             margin-bottom: 20px;
         }
         .step .instructions, .step li {
             font-size: 1rem;
             color: var(--color-text-secondary);
             text-align: left;
+            line-height: 1.6;
         }
+        .step .instructions a {
+            color: var(--emirates-red);
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .step .instructions a:hover {
+            text-decoration: underline;
+        }
+        
         details {
             border: 1px solid var(--color-border);
             border-radius: 8px;
@@ -136,6 +146,7 @@
             cursor: move;
             margin-top: 10px;
         }
+        
         .magic-button {
             display: inline-flex;
             align-items: center;
@@ -161,7 +172,9 @@
         <header class="header">
             <h1><span>Roster</span>Cal</h1>
         </header>
+        
         <main class="main-content">
+            
             <details>
                 <summary>Bookmarklet Setup</summary>
                 <div class="details-content">
@@ -174,8 +187,12 @@
                     </ol>
                 </div>
             </details>
+            
             <div class="step">
                 <h2>Process Your Roster</h2>
+                <p class="instructions" style="text-align: center; margin-bottom: 25px;">
+                    Go to your roster <a href="https://emiratesgroup.sharepoint.com/sites/ccp/roster/Pages/Roster.aspx" target="_blank" rel="noopener noreferrer">page</a>, click the "Copy Roster" bookmark, then come back and click the button below.
+                </p>
                 <a href="#" id="magic-button" class="magic-button">
                     <span id="button-icon" class="icon">📋</span>
                 </a>
@@ -202,12 +219,14 @@
                         alert("Clipboard is empty. Please use the 'Copy Roster' bookmarklet first.");
                         return;
                     }
+                    
                     const events = parsePlainTextForRosterEvents(text);
                     if (!events || events.length === 0) {
                         buttonIcon.innerText = '❌';
                         setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
                         return;
                     }
+                    
                     const icsContent = generateIcsFile(events);
                     const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
                     const url = URL.createObjectURL(file);
@@ -217,10 +236,12 @@
                     isProcessed = true;
                     magicButton.href = url;
                     magicButton.setAttribute('download', 'MyRoster.ics');
+
                     setTimeout(() => {
                         buttonIcon.style.transform = 'rotate(360deg)';
                         buttonIcon.innerText = '⬇️';
                     }, 1000); 
+                    
                 }).catch(err => {
                     alert('Could not read clipboard. Please allow permission and try again.');
                     buttonIcon.innerText = '❌';
