@@ -41,14 +41,10 @@
             text-align: center;
         }
         .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin: 0;
-            color: var(--white);
+            font-size: 2.5rem; font-weight: 700; margin: 0; color: var(--white);
         }
         .header h1 span {
-            font-weight: 300;
-            color: #ccc;
+            font-weight: 300; color: #ccc;
         }
         .main-content {
             padding: 30px;
@@ -80,29 +76,55 @@
             cursor: move;
             margin: 10px 0;
         }
-        textarea#bookmarklet-code {
-            height: 100px; 
-            font-size: 11px; 
-            width: 100%; 
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: "SF Mono", "Menlo", "Courier New", monospace;
+            font-size: 13px;
+            margin-top: 10px;
             box-sizing: border-box;
-            -webkit-user-select: all; /* Facilita la selección en iOS */
-            user-select: all;
         }
-        #result-area {
-            text-align: center;
+        button {
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: var(--font-main);
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            box-sizing: border-box;
+            background-color: var(--emirates-red);
+            color: var(--white);
+            border: none;
+        }
+        button:hover {
+            background-color: #b8151c;
+            transform: translateY(-2px);
+        }
+        #download-area {
             margin-top: 25px;
-            min-height: 50px;
+            text-align: center;
+            height: 50px; 
         }
-        .button-download {
+        #download-link {
             display: inline-block;
-            padding: 15px 30px;
+            padding: 12px 25px;
             background-color: #28a745;
             color: white;
             text-decoration: none;
             border-radius: 8px;
             font-weight: bold;
-            transition: background-color 0.3s, transform 0.2s;
-            font-size: 1.2rem;
+            transition: background-color 0.3s;
+            font-size: 1.1rem;
         }
     </style>
 </head>
@@ -114,55 +136,79 @@
         </header>
         
         <main class="main-content">
+            
             <div class="step">
-                <h2>The Easy Way: The Smart Bookmarklet</h2>
-                <p class="instructions">This "super-bookmark" does all the work for you. No more copy-pasting!</p>
-                <h3>Setup Instructions (One time only)</h3>
+                <h2>Easy Roster Copy (Bookmarklet)</h2>
+                <p class="instructions">Use this bookmark to **instantly copy your roster text** without manual selection. This is the easiest and most reliable way, especially on iPhone.</p>
+                
+                <h3>Setup Instructions</h3>
                 <ol>
-                    <li><strong>On Computer (Chrome, Safari):</strong> Drag this link to your bookmarks bar:<br><a href="#" id="bookmarklet-link" class="bookmarklet-link">Process Roster</a></li>
-                    <li><strong>On iPhone/iPad (Safari):</strong>
+                    <li><strong>On Computer:</strong> Drag this link to your bookmarks bar: <a href="#" id="bookmarklet-link" class="bookmarklet-link">Copy Roster</a></li>
+                    <li><strong>On iPhone/iPad:</strong>
                         <ul style="padding-left: 20px;">
                             <li>Bookmark this page.</li>
-                            <li>Edit the new bookmark, rename it to `Process Roster`.</li>
-                            <li>Clear the address field, and paste the code from the box below (tap the button to copy).</li>
+                            <li>Edit the new bookmark, rename it to `Copy Roster`.</li>
+                            <li>Clear the address and paste the code from the box below.</li>
                         </ul>
                     </li>
                 </ol>
-                <textarea id="bookmarklet-code" readonly></textarea>
+                <textarea id="bookmarklet-code" readonly style="height: 80px; font-size: 11px; width: 100%; box-sizing: border-box;"></textarea>
                 <button id="copy-code-btn" style="width: auto; padding: 8px 15px; font-size: 0.9rem; margin-top: 5px;">Copy Code for iPhone</button>
             </div>
             
             <div class="step">
-                <h2>How to Use</h2>
-                 <ol>
-                    <li>Go to the official Emirates roster page.</li>
-                    <li>Open your bookmarks and tap on **"Process Roster"**.</li>
-                    <li>Done! This page will open in a new tab with a download button ready for you.</li>
-                </ol>
-            </div>
-
-            <div id="result-area">
-                 <p class="instructions">Waiting for data from the bookmarklet...</p>
+                <h2>Process Your Roster</h2>
+                <p class="instructions">Go to the roster page, click your "Copy Roster" bookmark, then come back here and paste into the box below.</p>
+                <textarea id="roster-input" placeholder="Paste your roster text here..."></textarea>
+                <button id="process-btn">Generate .ics File</button>
+                 <div id="download-area">
+                    </div>
             </div>
         </main>
     </div>
 
     <script>
+        // --- LÓGICA DE LA PÁGINA Y BOOKMARKLET ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const bookmarkletCodeTextarea = document.getElementById('bookmarklet-code');
+            const bookmarkletLink = document.getElementById('bookmarklet-link');
+            
+            // Este es el código del bookmarklet, ahora mucho más simple y fiable.
+            const bookmarkletCode = `javascript:(function(){try{navigator.clipboard.writeText(document.body.innerText);alert('Roster text copied!\\n\\nNow go back to the RosterCal page and paste.');}catch(e){alert('Error: Could not copy text. Please try copying manually.');}})();`;
+            
+            bookmarkletCodeTextarea.value = bookmarkletCode;
+            bookmarkletLink.href = bookmarkletCode;
+
+            document.getElementById('copy-code-btn').addEventListener('click', () => {
+                bookmarkletCodeTextarea.select();
+                document.execCommand('copy');
+                alert('Code copied to clipboard! Now edit your bookmark and paste this in the address field.');
+            });
+
+            document.getElementById('process-btn').addEventListener('click', () => {
+                const text = document.getElementById('roster-input').value;
+                if (!text) {
+                    alert("Please paste your roster text first.");
+                    return;
+                }
+                const events = parsePlainTextForRosterEvents(text);
+                if (!events || events.length === 0) {
+                    return; 
+                }
+                const icsContent = generateIcsFile(events);
+                const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                const url = URL.createObjectURL(file);
+                
+                const downloadArea = document.getElementById('download-area');
+                downloadArea.innerHTML = `<a href="${url}" id="download-link" download="MyRoster.ics" style="display:inline-block;">Download File</a>`;
+                alert(`${events.length} events are ready. Click the download link.`);
+            });
+        });
+
+        // --- LÓGICA DE PARSEO Y GENERACIÓN (Completa y sin cambios) ---
         const timeZoneOffsets = { 'ABJ': 0, 'ABV': 1, 'ACC': 0, 'ADD': 3, 'ADL': 9.5, 'AKL': 12, 'ALG': 1, 'AMD': 5.5, 'AMM': 3, 'AMS': 2, 'ARN': 2, 'ATH': 3, 'ATL': -4, 'BAH': 3, 'BBI': 5.5, 'BCN': 2, 'BEY': 3, 'BGI': -4, 'BGW': 3, 'BHX': 1, 'BKK': 7, 'BLQ': 2, 'BLR': 5.5, 'BNE': 10, 'BOG': -5, 'BOM': 5.5, 'BOS': -4, 'BRU': 2, 'BSB': -3, 'BSR': 3, 'BUD': 2, 'CAI': 3, 'CAN': 8, 'CCJ': 5.5, 'CCU': 5.5, 'CDG': 2, 'CEB': 8, 'CGK': 7, 'CHC': 12, 'CKY': 0, 'CMB': 5.5, 'CMN': 1, 'COK': 5.5, 'CPH': 2, 'CPT': 2, 'CRK': 8, 'DAC': 6, 'DAR': 3, 'DEL': 5.5, 'DEN': -6, 'DFW': -5, 'DJE': 1, 'DME': 3, 'DMM': 3, 'DOH': 3, 'DPS': 8, 'DSS': 0, 'DUB': 1, 'DUR': 2, 'DUS': 2, 'DXB': 4, 'EBB': 3, 'EDI': 1, 'EWR': -4, 'EZE': -3, 'FCO': 2, 'FRA': 2, 'GIG': -3, 'GLA': 1, 'GOT': 2, 'GRU': -3, 'GVA': 2, 'GYD': 4, 'HAM': 2, 'HAN': 7, 'HBE': 3, 'HEL': 3, 'HGH': 8, 'HKG': 8, 'HKT': 7, 'HND': 9, 'HRE': 2, 'HYD': 5.5, 'IAD': -4, 'IAH': -5, 'ICN': 9, 'IKA': 3.5, 'ISB': 5, 'IST': 3, 'JED': 3, 'JFK': -4, 'JNB': 2, 'KHI': 5, 'KIX': 9, 'KRT': 2, 'KUL': 8, 'KWI': 3, 'LAD': 1, 'LAX': -7, 'LCA': 3, 'LED': 3, 'LGW': 1, 'LHE': 5, 'LHR': 1, 'LIS': 1, 'LOS': 1, 'LUN': 2, 'LYS': 2, 'MAA': 5.5, 'MAD': 2, 'MAN': 1, 'MCO': -4, 'MCT': 4, 'MED': 3, 'MEL': 10, 'MEX': -6, 'MIA': -4, 'MLA': 2, 'MLE': 5, 'MNL': 8, 'MPM': 2, 'MRU': 4, 'MUC': 2, 'MXP': 2, 'NBO': 3, 'NCE': 2, 'NCL': 1, 'NDJ': 1, 'NRT': 9, 'ORD': -5, 'OSL': 2, 'OTP': 3, 'PER': 8, 'PEW': 5, 'PNH': 7, 'PRG': 2, 'PVG': 8, 'RUH': 3, 'SAW': 3, 'SEA': -7, 'SEZ': 4, 'SFO': -7, 'SGN': 7, 'SIN': 8, 'SKT': 5, 'STN': 1, 'SZX': 8, 'SYD': 10, 'TNR': 3, 'TPE': 8, 'TLV': 3, 'TRV': 5.5, 'TUN': 1, 'VCE': 2, 'VIE': 2, 'WAW': 2, 'YYC': -6, 'YUL': -4, 'YYZ': -4, 'ZAG': 2, 'ZRH': 2 };
         const airportNames = { 'ABJ': 'Abidjan', 'ABV': 'Abuja', 'ACC': 'Accra', 'ADD': 'Addis Ababa', 'ADL': 'Adelaide', 'AKL': 'Auckland', 'ALG': 'Algiers', 'AMD': 'Ahmedabad', 'AMM': 'Amman', 'AMS': 'Amsterdam', 'ARN': 'Stockholm', 'ATH': 'Athens', 'ATL': 'Atlanta', 'BAH': 'Bahrain', 'BBI': 'Bhubaneswar', 'BCN': 'Barcelona', 'BEY': 'Beirut', 'BGW': 'Baghdad', 'BHX': 'Birmingham', 'BKK': 'Bangkok', 'BLQ': 'Bologna', 'BLR': 'Bengaluru', 'BNE': 'Brisbane', 'BOG': 'Bogota', 'BOM': 'Mumbai', 'BOS': 'Boston', 'BRU': 'Brussels', 'BSR': 'Basra', 'BUD': 'Budapest', 'CAI': 'Cairo', 'CAN': 'Guangzhou', 'CCJ': 'Kozhikode', 'CCU': 'Kolkata', 'CDG': 'Paris', 'CEB': 'Cebu', 'CGK': 'Jakarta', 'CHC': 'Christchurch', 'CKY': 'Conakry', 'CMB': 'Colombo', 'CMN': 'Casablanca', 'COK': 'Kochi', 'CPH': 'Copenhagen', 'CPT': 'Cape Town', 'CRK': 'Clark', 'DAC': 'Dhaka', 'DAR': 'Dar es Salaam', 'DEL': 'Delhi', 'DEN': 'Denver', 'DFW': 'Dallas', 'DJE': 'Djerba', 'DME': 'Moscow', 'DMM': 'Dammam', 'DOH': 'Doha', 'DPS': 'Denpasar', 'DSS': 'Dakar', 'DUB': 'Dublin', 'DUR': 'Durban', 'DUS': 'Dusseldorf', 'DXB': 'Dubai', 'EBB': 'Entebbe', 'EDI': 'Edinburgh', 'EWR': 'Newark', 'EZE': 'Buenos Aires', 'FCO': 'Rome', 'FRA': 'Frankfurt', 'GIG': 'Rio de Janeiro', 'GLA': 'Glasgow', 'GOT': 'Gothenburg', 'GRU': 'Sao Paulo', 'GVA': 'Geneva', 'GYD': 'Baku', 'HAM': 'Hamburg', 'HAN': 'Hanoi', 'HBE': 'Alexandria', 'HEL': 'Helsinki', 'HGH': 'Hangzhou', 'HKG': 'Hong Kong', 'HKT': 'Phuket', 'HND': 'Tokyo-Haneda', 'HRE': 'Harare', 'HYD': 'Hyderabad', 'IAD': 'Washington D.C.', 'IAH': 'Houston', 'ICN': 'Seoul', 'IKA': 'Tehran', 'ISB': 'Islamabad', 'IST': 'Istanbul', 'JED': 'Jeddah', 'JFK': 'New York', 'JNB': 'Johannesburg', 'KHI': 'Karachi', 'KIX': 'Osaka', 'KRT': 'Khartoum', 'KUL': 'Kuala Lumpur', 'KWI': 'Kuwait City', 'LAD': 'Luanda', 'LAX': 'Los Angeles', 'LCA': 'Larnaca', 'LED': 'St. Petersburg', 'LGW': 'London-Gatwick', 'LHE': 'Lahore', 'LHR': 'London-Heathrow', 'LIS': 'Lisbon', 'LOS': 'Lagos', 'LUN': 'Lusaka', 'LYS': 'Lyon', 'MAA': 'Chennai', 'MAD': 'Madrid', 'MAN': 'Manchester', 'MCO': 'Orlando', 'MCT': 'Muscat', 'MED': 'Medina', 'MEL': 'Melbourne', 'MEX': 'Mexico City', 'MIA': 'Miami', 'MLA': 'Malta', 'MLE': 'Malé', 'MNL': 'Manila', 'MPM': 'Maputo', 'MRU': 'Mauritius', 'MUC': 'Munich', 'MXP': 'Milan', 'NBO': 'Nairobi', 'NCE': 'Nice', 'NCL': 'Newcastle', 'NRT': 'Tokyo-Narita', 'ORD': 'Chicago', 'OSL': 'Oslo', 'OTP': 'Bucharest', 'PER': 'Perth', 'PEW': 'Peshawar', 'PNH': 'Phnom Penh', 'PRG': 'Prague', 'PVG': 'Shanghai', 'RUH': 'Riyadh', 'SAW': 'Istanbul-Sabiha', 'SEA': 'Seattle', 'SEZ': 'Seychelles', 'SFO': 'San Francisco', 'SGN': 'Ho Chi Minh City', 'SIN': 'Singapore', 'SKT': 'Sialkot', 'STN': 'London-Stansted', 'SZX': 'Shenzhen', 'SYD': 'Sydney', 'TNR': 'Antananarivo', 'TPE': 'Taipei', 'TLV': 'Tel Aviv', 'TRV': 'Thiruvananthapuram', 'TUN': 'Tunis', 'VCE': 'Venice', 'VIE': 'Vienna', 'WAW': 'Warsaw', 'YYC': 'Calgary', 'YUL': 'Montreal', 'YYZ': 'Toronto', 'ZAG': 'Zagreb', 'ZRH': 'Zurich' };
         
-        function createEventsFromParsedData(duties, leave) {
-            // ... (Esta función no cambia)
-        }
-        function parsePlainTextForRosterEvents(text) {
-            // ... (Esta función no cambia)
-        }
-        function generateIcsFile(events) {
-            // ... (Esta función no cambia)
-        }
-        
-        // --- Pegar aquí las funciones completas de la respuesta anterior ---
-        // (Para brevedad, las omito, pero en el archivo final deben estar)
         function createEventsFromParsedData(duties,leave){const finalEvents=[];leave.forEach(l=>finalEvents.push(l));const sortedDuties=duties.sort((a,b)=>a.reportTime-b.reportTime);sortedDuties.forEach((duty,index)=>{if(duty.depSt==='DXB'){finalEvents.push({title:'🕑 REPORT',description:`Report for flight EK${duty.flightNum} to ${duty.arrSt}`,location:duty.depSt,startTime:duty.reportTime,endTime:new Date(duty.reportTime.getTime()+90*60*1000)})}const depName=airportNames[duty.depSt]||duty.depSt;const arrName=airportNames[duty.arrSt]||duty.arrSt;finalEvents.push({title:`✈️ ${depName} (${duty.depSt}) - ${arrName} (${duty.arrSt})`,description:`Flight EK${duty.flightNum}. Duration: ${duty.durationStr}.`,location:`${duty.depSt}-${duty.arrSt}`,startTime:duty.departureTime,endTime:duty.arrivalTime});const nextDuty=sortedDuties[index+1];if(nextDuty&&duty.arrSt===nextDuty.depSt&&duty.arrSt!=='DXB'){const layoverStart=duty.arrivalTime;const layoverEnd=nextDuty.departureTime;if(layoverEnd>layoverStart){const durationMillis=layoverEnd.getTime()-layoverStart.getTime();if(durationMillis>(12*60*60*1000)){const totalMinutes=Math.round(durationMillis/(1000*60));const hours=Math.floor(totalMinutes/60);const minutes=totalMinutes%60;const formattedDuration=`${hours}:${String(minutes).padStart(2,'0')}`;finalEvents.push({title:`💼 Layover (${formattedDuration} hours)`,description:`Layover in ${duty.arrSt}. Total duration: ${formattedDuration} hours.`,location:duty.arrSt,startTime:layoverStart,endTime:layoverEnd})}}}})
         return finalEvents}
         function parsePlainTextForRosterEvents(text){const parsedDuties=[];const parsedLeave=[];const lines=text.split('\n');const dateRangeMatch=text.match(/(\d{1,2})-(\d{1,2})-(\d{4})\s+to/);if(!dateRangeMatch){alert("Error: Could not determine the roster's month and year. Make sure to copy the date line (e.g., '1-8-2024 to 31-8-2024').");return[]}const month=parseInt(dateRangeMatch[2],10);const year=parseInt(dateRangeMatch[3],10);let currentDay=null;let lastReportTime=null;for(const line of lines){const primaryFlightMatch=line.match(/^(\d{2})\s+\w{3}.*?(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);const secondaryFlightMatch=line.trim().match(/^(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);const calledOutFlightMatch=line.trim().match(/^(\w+)\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);const leaveMatch=line.match(/^(\d{2})\s+\w{3}\s+([A-Z0-9]+)\s+(\d{2}:\d{2})\s+(.+?)\s+(\d{2}:\d{2})$/);const dayOffMatch=line.match(/^(\d{2})\s+\w{3}\s+XXR?/);let dutyInfo=null;if(primaryFlightMatch){currentDay=parseInt(primaryFlightMatch[1],10);const[_,dayStr,reportTimeStr,flightNum,depSt,depTimeStr,arrSt,arrTimeStr,durationStr]=primaryFlightMatch;dutyInfo={day:currentDay,reportTimeStr,flightNum,depSt,depTimeStr,arrSt,durationStr};lastReportTime=reportTimeStr}else if(secondaryFlightMatch&&currentDay&&lastReportTime){const[_,reportTimeStr,flightNum,depSt,depTimeStr,arrSt,arrTimeStr,durationStr]=secondaryFlightMatch;dutyInfo={day:currentDay,reportTimeStr:lastReportTime,flightNum,depSt,depTimeStr,arrSt,durationStr}}else if(calledOutFlightMatch&&currentDay){const[_,flightNum,reportTimeStr,__,depSt,depTimeStr,arrSt,arrTimeStr,durationStr]=calledOutFlightMatch;dutyInfo={day:currentDay,reportTimeStr,flightNum,depSt,depTimeStr,arrSt,durationStr}}
@@ -170,77 +216,6 @@
         const[startH,startM]=startTimeStr.split(':').map(Number);const[endH,endM]=endTimeStr.split(':').map(Number);startTime=createDubaiUTCDate(currentDay,startH,startM);let endTimeDate=createDubaiUTCDate(currentDay,endH,endM);if(endTimeDate<startTime){endTimeDate.setDate(endTimeDate.getDate()+1)}endTime=endTimeDate}parsedLeave.push({title,description,location:"Home",startTime,endTime})}}
         return createEventsFromParsedData(parsedDuties,parsedLeave)}
         function generateIcsFile(events){events.sort((a,b)=>a.startTime-b.startTime);let icsString=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RosterCal//EN'].join('\r\n')+'\r\n';events.forEach(event=>{if(!event.startTime||!event.endTime||isNaN(event.startTime)||isNaN(event.endTime))return;const formatDT=dt=>new Date(dt).toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';icsString+=['BEGIN:VEVENT',`UID:${Date.now()}${Math.random()}@yourdomain.com`,`DTSTAMP:${formatDT(new Date())}`,`DTSTART:${formatDT(event.startTime)}`,`DTEND:${formatDT(event.endTime)}`,`SUMMARY:${event.title}`,`DESCRIPTION:${event.description}`,`LOCATION:${event.location}`,'END:VEVENT'].join('\r\n')+'\r\n'});icsString+='END:VCALENDAR';return icsString}
-
-        // Lógica de la página
-        document.addEventListener('DOMContentLoaded', () => {
-            const bookmarkletCodeTextarea = document.getElementById('bookmarklet-code');
-            const bookmarkletLink = document.getElementById('bookmarklet-link');
-            const copyCodeBtn = document.getElementById('copy-code-btn');
-            const resultArea = document.getElementById('result-area');
-            
-            const toolUrl = window.location.href.split('?')[0];
-
-            // Esto es una versión simplificada de toda la lógica de parseo para el bookmarklet.
-            // Es sensible a cambios, pero es la única forma de hacerlo compacto.
-            const bookmarkletFunctionString = `
-            (function() {
-                try {
-                    const text = document.body.innerText;
-                    if (!text) { throw new Error('No text found on page.'); }
-                    
-                    const dateMatch = text.match(/(\\d{1,2})-(\\d{1,2})-(\\d{4})\\s+to/);
-                    if (!dateMatch) { throw new Error('Roster month/year not found.'); }
-                    
-                    // Solo pasamos el texto y la fecha, el parseo pesado se hace en la página principal.
-                    const data = {
-                        text: text,
-                        month: parseInt(dateMatch[2], 10),
-                        year: parseInt(dateMatch[3], 10)
-                    };
-                    const encodedData = encodeURIComponent(JSON.stringify(data));
-                    window.open('${toolUrl}?data=' + encodedData, '_blank');
-                } catch(e) {
-                    alert('Error processing page: ' + e.message);
-                }
-            })();
-            `;
-
-            const finalBookmarkletCode = 'javascript:' + bookmarkletFunctionString.replace(/\s\s+/g, ' ').replace(/\n/g, '');
-
-            bookmarkletCodeTextarea.value = finalBookmarkletCode;
-            bookmarkletLink.href = finalBookmarkletCode;
-
-            copyCodeBtn.addEventListener('click', () => {
-                bookmarkletCodeTextarea.select();
-                document.execCommand('copy');
-                alert('Code copied to clipboard! Now edit your bookmark and paste this in the address field.');
-            });
-
-            // Procesar datos si vienen en la URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const dataParam = urlParams.get('data');
-
-            if (dataParam) {
-                try {
-                    const rosterInfo = JSON.parse(decodeURIComponent(dataParam));
-                    const events = parsePlainTextForRosterEvents(rosterInfo.text); 
-                    if (!events || events.length === 0) {
-                        resultArea.innerHTML = `<p style="color:red;">Could not parse any events from the roster data.</p>`;
-                        return;
-                    }
-                    const icsContent = generateIcsFile(events);
-                    const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                    const url = URL.createObjectURL(file);
-                    
-                    resultArea.innerHTML = `
-                        <h2>Success! ${events.length} events found.</h2>
-                        <a href="${url}" download="MyRoster.ics" class="button-download">Download .ics File</a>
-                    `;
-                } catch (e) {
-                    resultArea.innerHTML = `<p style="color:red;">Error processing data. The data from the bookmarklet might be invalid.</p>`;
-                }
-            }
-        });
     </script>
 
 </body>
