@@ -62,7 +62,7 @@
         }
         
         .step {
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
         
         .step h2 {
@@ -92,18 +92,6 @@
             margin: 10px 0;
         }
         
-        .manual-toggle {
-            color: var(--emirates-red);
-            text-decoration: underline;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        
-        #manual-section {
-            display: none; /* Oculto por defecto */
-            margin-top: 20px;
-        }
-
         textarea {
             width: 100%;
             height: 250px;
@@ -115,7 +103,7 @@
             margin-top: 10px;
             box-sizing: border-box;
         }
-
+        
         button {
             width: 100%;
             padding: 15px;
@@ -140,9 +128,22 @@
             transform: translateY(-2px);
         }
         
-        #result-area {
-            text-align: center;
+        #download-area {
             margin-top: 25px;
+            text-align: center;
+            height: 50px; 
+        }
+
+        #download-link {
+            display: none;
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+            font-size: 1.1rem;
         }
     </style>
 </head>
@@ -156,129 +157,75 @@
         <main class="main-content">
             
             <div class="step">
-                <h2>The Easy Way: Use the Bookmarklet</h2>
-                <p class="instructions">This is a "super-bookmark" that grabs your roster automatically. **Set it up once, and you'll never have to copy-paste again.**</p>
+                <h2>Easy Roster Grabber (Bookmarklet)</h2>
+                <p class="instructions">Use this "super-bookmark" to **instantly copy your roster text** without manual selection. This is the easiest way, especially on iPhone.</p>
                 
-                <h3>Setup on Computer (Chrome, Safari)</h3>
+                <h3>Setup Instructions</h3>
                 <ol>
-                    <li>Drag this link to your bookmarks bar: <a href="#" id="bookmarklet-link" class="bookmarklet-link">Process Roster</a></li>
+                    <li><strong>On Computer:</strong> Drag this link to your bookmarks bar: <a href="#" id="bookmarklet-link" class="bookmarklet-link">Process Roster</a></li>
+                    <li><strong>On iPhone/iPad:</strong>
+                        <ul style="padding-left: 20px;">
+                            <li>Bookmark this page.</li>
+                            <li>Edit the new bookmark, change the name to "Process Roster".</li>
+                            <li>Clear the address and paste the code from the box below.</li>
+                        </ul>
+                    </li>
                 </ol>
-
-                <h3>Setup on iPhone/iPad (Safari)</h3>
-                <ol>
-                    <li>Bookmark this page (or any page).</li>
-                    <li>Go to your Bookmarks, tap "Edit", and select the new bookmark.</li>
-                    <li>Change the name to something like `Process Roster`.</li>
-                    <li>Clear the address field, and paste the code from the box below (tap the button to copy it).</li>
-                </ol>
-                <textarea id="bookmarklet-code" readonly style="height: 100px; font-size: 11px;"></textarea>
-                <button id="copy-code-btn" style="width: auto; padding: 8px 15px; font-size: 0.9rem; margin-top: 5px;">Copy Code</button>
+                <textarea id="bookmarklet-code" readonly style="height: 80px; font-size: 11px;"></textarea>
+                <button id="copy-code-btn" style="width: auto; padding: 8px 15px; font-size: 0.9rem; margin-top: 5px;">Copy Code for iPhone</button>
             </div>
             
             <div class="step">
-                <h2>How to Use</h2>
-                 <ol>
-                    <li>Go to the official Emirates roster page.</li>
-                    <li>Open your bookmarks and tap on **"Process Roster"**.</li>
-                    <li>Done! This page will reload with your roster, ready to be processed.</li>
-                </ol>
-            </div>
-
-            <div id="result-area">
-                </div>
-            
-             <p class="instructions" style="text-align: center; margin-top: 30px;">
-                <span id="manual-toggle" class="manual-toggle">Need to paste text manually? Click here.</span>
-            </p>
-
-            <div id="manual-section">
-                <h2>Manual Method</h2>
-                <textarea id="html-input" placeholder="Paste your roster text here..."></textarea>
+                <h2>Process Your Roster</h2>
+                <p class="instructions">Go to the roster page, click your "Process Roster" bookmarklet, then come back here and paste the text below.</p>
+                <textarea id="roster-input" placeholder="Paste your roster text here..."></textarea>
                 <button id="process-btn">Generate .ics File</button>
+                 <div id="download-area">
+                    </div>
             </div>
         </main>
     </div>
 
     <script>
-        // --- Toda la lógica de parseo y generación de ICS sigue aquí ---
-        // (La incluyo abajo para que el script sea autocontenido)
-
         // --- LÓGICA DE LA PÁGINA Y BOOKMARKLET ---
         document.addEventListener('DOMContentLoaded', () => {
-            const resultArea = document.getElementById('result-area');
-            const manualToggle = document.getElementById('manual-toggle');
-            const manualSection = document.getElementById('manual-section');
-            const processBtn = document.getElementById('process-btn');
-            const htmlInput = document.getElementById('html-input');
+            // Generar dinámicamente el código del bookmarklet
             const bookmarkletCodeTextarea = document.getElementById('bookmarklet-code');
-            const copyCodeBtn = document.getElementById('copy-code-btn');
             const bookmarkletLink = document.getElementById('bookmarklet-link');
             
-            // 1. Generar dinámicamente el código del bookmarklet
-            // Esto asegura que siempre redirija a esta página, incluso si la guardas localmente.
-            const pageUrl = window.location.href.split('?')[0];
-            const bookmarkletCode = `javascript:(function(){const html=document.documentElement.outerHTML;const encodedHtml=encodeURIComponent(html);window.location.href='${pageUrl}?data='+encodedHtml;})();`;
+            const bookmarkletCode = `javascript:(function(){try{navigator.clipboard.writeText(document.body.innerText);alert('Roster text copied!\\n\\nNow go back to the RosterCal page and paste.');}catch(e){alert('Error: Could not copy text.');}})();`;
+            
             bookmarkletCodeTextarea.value = bookmarkletCode;
             bookmarkletLink.href = bookmarkletCode;
-            
-            // 2. Botón para copiar el código del bookmarklet
-            copyCodeBtn.addEventListener('click', () => {
+
+            // Botón para copiar el código del bookmarklet
+            document.getElementById('copy-code-btn').addEventListener('click', () => {
                 bookmarkletCodeTextarea.select();
                 document.execCommand('copy');
-                alert('Code copied to clipboard!');
+                alert('Code copied to clipboard! Now edit your bookmark and paste this in the address field.');
             });
 
-            // 3. Lógica para mostrar la sección manual
-            manualToggle.addEventListener('click', () => {
-                manualSection.style.display = manualSection.style.display === 'none' ? 'block' : 'none';
-            });
-            
-            // 4. Comprobar si la página se ha cargado con datos del roster
-            const urlParams = new URLSearchParams(window.location.search);
-            const rosterData = urlParams.get('data');
-
-            if (rosterData) {
-                const decodedHtml = decodeURIComponent(rosterData);
-                // Extraer el texto visible para nuestro parser
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(decodedHtml, "text/html");
-                const textContent = doc.body.innerText || "";
-                
-                if (textContent) {
-                    htmlInput.value = textContent; // Llenar el textarea por si acaso
-                    processAndDisplay(textContent);
-                } else {
-                    resultArea.innerHTML = `<p style="color:red;">Could not get text from the data. Try the manual method.</p>`;
-                }
-            } else {
-                 resultArea.innerHTML = `<p class="instructions">Use the bookmarklet on your roster page or paste text manually.</p>`;
-            }
-            
-            // 5. El botón de procesado manual sigue funcionando
-            processBtn.addEventListener('click', () => {
-                processAndDisplay(htmlInput.value);
-            });
-            
-            function processAndDisplay(text) {
+            // Botón de procesado
+            document.getElementById('process-btn').addEventListener('click', () => {
+                const text = document.getElementById('roster-input').value;
                 if (!text) {
                     alert("Please paste your roster text first.");
                     return;
                 }
                 const events = parsePlainTextForRosterEvents(text);
                 if (!events || events.length === 0) {
-                    return;
+                    return; // Error alert is shown inside the parser
                 }
                 const icsContent = generateIcsFile(events);
                 const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
                 const url = URL.createObjectURL(file);
                 
-                resultArea.innerHTML = `
-                    <h3>Success! ${events.length} events found.</h3>
-                    <a href="${url}" download="MyRoster.ics" class="button button-primary" style="background-color:#28a745;">Download .ics File</a>
-                `;
-            }
+                const downloadArea = document.getElementById('download-area');
+                downloadArea.innerHTML = `<a href="${url}" id="download-link" download="MyRoster.ics" style="display:inline-block;">Download File</a>`;
+                alert(`${events.length} events are ready. Click the download link.`);
+            });
         });
-        
+
         // --- LÓGICA DE PARSEO Y GENERACIÓN (SIN CAMBIOS) ---
         const timeZoneOffsets = { 'ABJ': 0, 'ABV': 1, 'ACC': 0, 'ADD': 3, 'ADL': 9.5, 'AKL': 12, 'ALG': 1, 'AMD': 5.5, 'AMM': 3, 'AMS': 2, 'ARN': 2, 'ATH': 3, 'ATL': -4, 'BAH': 3, 'BBI': 5.5, 'BCN': 2, 'BEY': 3, 'BGI': -4, 'BGW': 3, 'BHX': 1, 'BKK': 7, 'BLQ': 2, 'BLR': 5.5, 'BNE': 10, 'BOG': -5, 'BOM': 5.5, 'BOS': -4, 'BRU': 2, 'BSB': -3, 'BSR': 3, 'BUD': 2, 'CAI': 3, 'CAN': 8, 'CCJ': 5.5, 'CCU': 5.5, 'CDG': 2, 'CEB': 8, 'CGK': 7, 'CHC': 12, 'CKY': 0, 'CMB': 5.5, 'CMN': 1, 'COK': 5.5, 'CPH': 2, 'CPT': 2, 'CRK': 8, 'DAC': 6, 'DAR': 3, 'DEL': 5.5, 'DEN': -6, 'DFW': -5, 'DJE': 1, 'DME': 3, 'DMM': 3, 'DOH': 3, 'DPS': 8, 'DSS': 0, 'DUB': 1, 'DUR': 2, 'DUS': 2, 'DXB': 4, 'EBB': 3, 'EDI': 1, 'EWR': -4, 'EZE': -3, 'FCO': 2, 'FRA': 2, 'GIG': -3, 'GLA': 1, 'GOT': 2, 'GRU': -3, 'GVA': 2, 'GYD': 4, 'HAM': 2, 'HAN': 7, 'HBE': 3, 'HEL': 3, 'HGH': 8, 'HKG': 8, 'HKT': 7, 'HND': 9, 'HRE': 2, 'HYD': 5.5, 'IAD': -4, 'IAH': -5, 'ICN': 9, 'IKA': 3.5, 'ISB': 5, 'IST': 3, 'JED': 3, 'JFK': -4, 'JNB': 2, 'KHI': 5, 'KIX': 9, 'KRT': 2, 'KUL': 8, 'KWI': 3, 'LAD': 1, 'LAX': -7, 'LCA': 3, 'LED': 3, 'LGW': 1, 'LHE': 5, 'LHR': 1, 'LIS': 1, 'LOS': 1, 'LUN': 2, 'LYS': 2, 'MAA': 5.5, 'MAD': 2, 'MAN': 1, 'MCO': -4, 'MCT': 4, 'MED': 3, 'MEL': 10, 'MEX': -6, 'MIA': -4, 'MLA': 2, 'MLE': 5, 'MNL': 8, 'MPM': 2, 'MRU': 4, 'MUC': 2, 'MXP': 2, 'NBO': 3, 'NCE': 2, 'NCL': 1, 'NDJ': 1, 'NRT': 9, 'ORD': -5, 'OSL': 2, 'OTP': 3, 'PER': 8, 'PEW': 5, 'PNH': 7, 'PRG': 2, 'PVG': 8, 'RUH': 3, 'SAW': 3, 'SEA': -7, 'SEZ': 4, 'SFO': -7, 'SGN': 7, 'SIN': 8, 'SKT': 5, 'STN': 1, 'SZX': 8, 'SYD': 10, 'TNR': 3, 'TPE': 8, 'TLV': 3, 'TRV': 5.5, 'TUN': 1, 'VCE': 2, 'VIE': 2, 'WAW': 2, 'YYC': -6, 'YUL': -4, 'YYZ': -4, 'ZAG': 2, 'ZRH': 2 };
         const airportNames = { 'ABJ': 'Abidjan', 'ABV': 'Abuja', 'ACC': 'Accra', 'ADD': 'Addis Ababa', 'ADL': 'Adelaide', 'AKL': 'Auckland', 'ALG': 'Algiers', 'AMD': 'Ahmedabad', 'AMM': 'Amman', 'AMS': 'Amsterdam', 'ARN': 'Stockholm', 'ATH': 'Athens', 'ATL': 'Atlanta', 'BAH': 'Bahrain', 'BBI': 'Bhubaneswar', 'BCN': 'Barcelona', 'BEY': 'Beirut', 'BGW': 'Baghdad', 'BHX': 'Birmingham', 'BKK': 'Bangkok', 'BLQ': 'Bologna', 'BLR': 'Bengaluru', 'BNE': 'Brisbane', 'BOG': 'Bogota', 'BOM': 'Mumbai', 'BOS': 'Boston', 'BRU': 'Brussels', 'BSR': 'Basra', 'BUD': 'Budapest', 'CAI': 'Cairo', 'CAN': 'Guangzhou', 'CCJ': 'Kozhikode', 'CCU': 'Kolkata', 'CDG': 'Paris', 'CEB': 'Cebu', 'CGK': 'Jakarta', 'CHC': 'Christchurch', 'CKY': 'Conakry', 'CMB': 'Colombo', 'CMN': 'Casablanca', 'COK': 'Kochi', 'CPH': 'Copenhagen', 'CPT': 'Cape Town', 'CRK': 'Clark', 'DAC': 'Dhaka', 'DAR': 'Dar es Salaam', 'DEL': 'Delhi', 'DEN': 'Denver', 'DFW': 'Dallas', 'DJE': 'Djerba', 'DME': 'Moscow', 'DMM': 'Dammam', 'DOH': 'Doha', 'DPS': 'Denpasar', 'DSS': 'Dakar', 'DUB': 'Dublin', 'DUR': 'Durban', 'DUS': 'Dusseldorf', 'DXB': 'Dubai', 'EBB': 'Entebbe', 'EDI': 'Edinburgh', 'EWR': 'Newark', 'EZE': 'Buenos Aires', 'FCO': 'Rome', 'FRA': 'Frankfurt', 'GIG': 'Rio de Janeiro', 'GLA': 'Glasgow', 'GOT': 'Gothenburg', 'GRU': 'Sao Paulo', 'GVA': 'Geneva', 'GYD': 'Baku', 'HAM': 'Hamburg', 'HAN': 'Hanoi', 'HBE': 'Alexandria', 'HEL': 'Helsinki', 'HGH': 'Hangzhou', 'HKG': 'Hong Kong', 'HKT': 'Phuket', 'HND': 'Tokyo-Haneda', 'HRE': 'Harare', 'HYD': 'Hyderabad', 'IAD': 'Washington D.C.', 'IAH': 'Houston', 'ICN': 'Seoul', 'IKA': 'Tehran', 'ISB': 'Islamabad', 'IST': 'Istanbul', 'JED': 'Jeddah', 'JFK': 'New York', 'JNB': 'Johannesburg', 'KHI': 'Karachi', 'KIX': 'Osaka', 'KRT': 'Khartoum', 'KUL': 'Kuala Lumpur', 'KWI': 'Kuwait City', 'LAD': 'Luanda', 'LAX': 'Los Angeles', 'LCA': 'Larnaca', 'LED': 'St. Petersburg', 'LGW': 'London-Gatwick', 'LHE': 'Lahore', 'LHR': 'London-Heathrow', 'LIS': 'Lisbon', 'LOS': 'Lagos', 'LUN': 'Lusaka', 'LYS': 'Lyon', 'MAA': 'Chennai', 'MAD': 'Madrid', 'MAN': 'Manchester', 'MCO': 'Orlando', 'MCT': 'Muscat', 'MED': 'Medina', 'MEL': 'Melbourne', 'MEX': 'Mexico City', 'MIA': 'Miami', 'MLA': 'Malta', 'MLE': 'Malé', 'MNL': 'Manila', 'MPM': 'Maputo', 'MRU': 'Mauritius', 'MUC': 'Munich', 'MXP': 'Milan', 'NBO': 'Nairobi', 'NCE': 'Nice', 'NCL': 'Newcastle', 'NRT': 'Tokyo-Narita', 'ORD': 'Chicago', 'OSL': 'Oslo', 'OTP': 'Bucharest', 'PER': 'Perth', 'PEW': 'Peshawar', 'PNH': 'Phnom Penh', 'PRG': 'Prague', 'PVG': 'Shanghai', 'RUH': 'Riyadh', 'SAW': 'Istanbul-Sabiha', 'SEA': 'Seattle', 'SEZ': 'Seychelles', 'SFO': 'San Francisco', 'SGN': 'Ho Chi Minh City', 'SIN': 'Singapore', 'SKT': 'Sialkot', 'STN': 'London-Stansted', 'SZX': 'Shenzhen', 'SYD': 'Sydney', 'TNR': 'Antananarivo', 'TPE': 'Taipei', 'TLV': 'Tel Aviv', 'TRV': 'Thiruvananthapuram', 'TUN': 'Tunis', 'VCE': 'Venice', 'VIE': 'Vienna', 'WAW': 'Warsaw', 'YYC': 'Calgary', 'YUL': 'Montreal', 'YYZ': 'Toronto', 'ZAG': 'Zagreb', 'ZRH': 'Zurich' };
