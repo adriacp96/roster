@@ -322,55 +322,75 @@
                 return dt;
             };
             
-            for (let day = startRosterDay; day <= endRosterDay; day++) {
+            
+const calendarViewRegex = /My Roster\s*[\d\-]+\s*to\s*[\d\-]+\s*All times are in local\s*([\s\S]*?)(?:Duty\s*Departure\s*Arrival|$)/;
+const calendarMatch = text.match(calendarViewRegex);
+if (calendarMatch) {
+    const calendarBlock = calendarMatch[1];
+    const calendarLines = calendarBlock.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    // Buscar las líneas que contienen días y códigos
+    let dayLineIndex = -1;
+    let codeLineIndex = -1;
+    
+    for (let i = 0; i < calendarLines.length; i++) {
+        const line = calendarLines[i];
+        // Buscar línea con números de días
+        if (/^\d+(\s+\d+)*\s*$/.test(line)) {
+            dayLineIndex = i;
+        }
+        // Buscar línea con códigos (XX, LV, etc.)
+        if (dayLineIndex !== -1 && i > dayLineIndex && /^[A-Z0-9]+(\s+[A-Z0-9]+)*\s*$/.test(line)) {
+            codeLineIndex = i;
+            break;
+        }
+    }
+    
+    if (dayLineIndex !== -1 && codeLineIndex !== -1) {
+        const dayLine = calendarLines[dayLineIndex].trim().split(/\s+/);
+        const codeLine = calendarLines[codeLineIndex].trim().split(/\s+/);
+        
+        for (let i = 0; i < Math.min(dayLine.length, codeLine.length); i++) {
+            const day = parseInt(dayLine[i], 10);
+            if (isNaN(day) || day < startRosterDay || day > endRosterDay) continue;
+
+            const code = codeLine[i].trim();
+            let eventTitle = null;
+            let eventDesc = null;
+
+            if (code.startsWith('XX')) {
+                eventDesc = 'Day Off'; 
+                eventTitle = '🏠 Day Off';
+                if (code === 'XXR') { 
+                    eventDesc = 'DAY OFF (RSV CREW)'; 
+                    eventTitle = `🏠 Day Off (RSV CREW)`; 
+                } else if (code === 'XXV') { 
+                    eventDesc = 'DAY OFF FOR VISA CHANGE'; 
+                    eventTitle = `🏠 Day Off (VISA CHANGE)`;
+                }
+            } else if (code === 'LV') {
+                eventDesc = 'Annual Leave';
+                eventTitle = '🏖️ Annual Leave';
+            } else if (code === 'LLV') {
+                eventDesc = 'Live Leave';
+                eventTitle = '🏖️ Live Leave';
+            } else if (code === 'SK') {
+                eventDesc = 'SICK';
+                eventTitle = '🤒 SICK';
+            }
+            
+            if (eventTitle) {
                 allDayEvents.set(day, {
                     isAllDay: true,
-                    title: '🏠 Day Off',
-                    description: 'Day Off',
+                    title: eventTitle,
+                    description: eventDesc,
                     location: 'Home',
                     startTime: createDubaiUTCDate(day, 0, 1),
                 });
             }
-            
-            const calendarViewRegex = /My Roster\s*[\d\-]+\s*to\s*[\d\-]+\s*All times are in local\s*([\s\S]*?)Duty\s*Departure\s*Arrival/;
-            const calendarMatch = text.match(calendarViewRegex);
-            if (calendarMatch) {
-                const calendarBlock = calendarMatch[1];
-                const calendarLines = calendarBlock.split('\n').filter(line => /\d/.test(line) && line.trim().length > 10);
-                if (calendarLines.length >= 2) {
-                    const dayLine = calendarLines[calendarLines.length - 2].trim().split(/\s+/);
-                    const codeLine = calendarLines[calendarLines.length - 1].trim().split(/\s+/);
-                    
-                    for (let i = 0; i < dayLine.length; i++) {
-                        const day = parseInt(dayLine[i], 10);
-                        if (isNaN(day) || !allDayEvents.has(day)) continue;
-
-                        const code = (codeLine[i] || '').trim();
-                        let eventTitle = null;
-                        let eventDesc = null;
-
-                        if (code.startsWith('XX')) {
-                            eventDesc = 'Day Off'; eventTitle = '🏠 Day Off';
-                            if (code === 'XXR') { eventDesc = 'DAY OFF (RSV CREW)'; eventTitle = `🏠 Day Off (RSV CREW)`; } 
-                            else if (code === 'XXV') { eventDesc = 'DAY OFF FOR VISA CHANGE'; eventTitle = `🏠 Day Off (VISA CHANGE)`; }
-                        } else if (code === 'LV' || code === 'LLV') {
-                            eventDesc = code === 'LLV' ? 'Live Leave' : 'Annual Leave';
-                            eventTitle = `🏖️ ${eventDesc}`;
-                        } else if (code === 'SK') {
-                            eventDesc = 'SICK';
-                            eventTitle = '🤒 SICK';
-                        }
-                        
-                        if (eventTitle) {
-                            const event = allDayEvents.get(day);
-                            if(event) {
-                                event.title = eventTitle;
-                                event.description = eventDesc;
-                            }
-                        }
-                    }
-                }
-            }
+        }
+    }
+}
 
             const lines = text.split('\n');
             let currentDay = null;
@@ -477,6 +497,7 @@
                 }
             }
             
+            
             const flightActivityDays = new Set();
             for (const duty of parsedDuties) {
                 flightActivityDays.add(duty.reportTime.getUTCDate());
@@ -484,9 +505,6 @@
                 flightActivityDays.add(duty.arrivalTime.getUTCDate());
             }
 
-            for (const day of flightActivityDays) {
-                allDayEvents.delete(day);
-            }
 
             const finalLeaveEvents = Array.from(allDayEvents.values());
             return createEventsFromParsedData(parsedDuties, finalLeaveEvents);
