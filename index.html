@@ -164,6 +164,33 @@
             text-align: center;
             border-top: 1px solid var(--color-border);
         }
+        .beta-badge {
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.35);
+            color: #222;
+            font-weight: 600;
+            font-size: 0.78rem;
+            padding: 2px 16px;
+            border-radius: 999px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            z-index: 9999;
+            letter-spacing: 1.5px;
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(215, 25, 33, 0.10);
+            opacity: 0.7;
+            pointer-events: none;
+            user-select: none;
+            transition: color 0.2s;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .beta-badge {
+                color: #fff;
+            }
+        }
     </style>
 </head>
 <body>
@@ -531,6 +558,6 @@
             return icsString;
         }
     </script>
-
+<div class="beta-badge">BETA</div>
 </body>
 </html>
