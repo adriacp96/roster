@@ -291,13 +291,14 @@
             return finalEvents;
         }
 
+        // ---------- MODIFIED FUNCTION: Robust XX detection (rest untouched) ----------
         function parsePlainTextForRosterEvents(text) {
             const parsedDuties = [];
             const allDayEvents = new Map();
 
+            // Roster period (date range)
             let dateRangeMatch = text.match(/(\d{1,2})-(\d{1,2})-(\d{4})\s+to\s+(\d{1,2})-(\d{1,2})-(\d{4})/);
             let startRosterDay, endRosterDay, month, year;
-
             if (dateRangeMatch) {
                 startRosterDay = parseInt(dateRangeMatch[1], 10);
                 month = parseInt(dateRangeMatch[2], 10);
@@ -314,90 +315,57 @@
                 startRosterDay = 1;
                 endRosterDay = new Date(year, month, 0).getDate();
             }
-            
             const createDubaiUTCDate = (day, h, m) => {
                 const offset = timeZoneOffsets['DXB'];
                 let dt = new Date(Date.UTC(year, month - 1, day, h, m));
                 dt.setUTCHours(dt.getUTCHours() - offset);
                 return dt;
             };
-            
-            
-const calendarViewRegex = /My Roster\s*[\d\-]+\s*to\s*[\d\-]+\s*All times are in local\s*([\s\S]*?)(?:Duty\s*Departure\s*Arrival|$)/;
-const calendarMatch = text.match(calendarViewRegex);
-if (calendarMatch) {
-    const calendarBlock = calendarMatch[1];
-    const calendarLines = calendarBlock.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-    
-    // Buscar las líneas que contienen días y códigos
-    let dayLineIndex = -1;
-    let codeLineIndex = -1;
-    
-    for (let i = 0; i < calendarLines.length; i++) {
-        const line = calendarLines[i];
-        // Buscar línea con números de días
-        if (/^\d+(\s+\d+)*\s*$/.test(line)) {
-            dayLineIndex = i;
-        }
-        // Buscar línea con códigos (XX, LV, etc.)
-        if (dayLineIndex !== -1 && i > dayLineIndex && /^[A-Z0-9]+(\s+[A-Z0-9]+)*\s*$/.test(line)) {
-            codeLineIndex = i;
-            break;
-        }
-    }
-    
-    if (dayLineIndex !== -1 && codeLineIndex !== -1) {
-        const dayLine = calendarLines[dayLineIndex].trim().split(/\s+/);
-        const codeLine = calendarLines[codeLineIndex].trim().split(/\s+/);
-        
-        for (let i = 0; i < Math.min(dayLine.length, codeLine.length); i++) {
-            const day = parseInt(dayLine[i], 10);
-            if (isNaN(day) || day < startRosterDay || day > endRosterDay) continue;
 
-            const code = codeLine[i].trim();
-            let eventTitle = null;
-            let eventDesc = null;
-
-            if (code.startsWith('XX')) {
-                eventDesc = 'Day Off'; 
-                eventTitle = '🏠 Day Off';
-                if (code === 'XXR') { 
-                    eventDesc = 'DAY OFF (RSV CREW)'; 
-                    eventTitle = `🏠 Day Off (RSV CREW)`; 
-                } else if (code === 'XXV') { 
-                    eventDesc = 'DAY OFF FOR VISA CHANGE'; 
-                    eventTitle = `🏠 Day Off (VISA CHANGE)`;
+            // Robust XX/AllDay detection: Find days/code lines anywhere
+            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+            let daysLine = null, codesLine = null;
+            for (let i = 0; i < lines.length - 1; ++i) {
+                if (/^\d+(\s+\d+)*$/.test(lines[i]) && /^[A-Z0-9]{2,}(\s+[A-Z0-9]{2,})*$/.test(lines[i+1])) {
+                    daysLine = lines[i].split(/\s+/).map(Number);
+                    codesLine = lines[i+1].split(/\s+/);
+                    break;
                 }
-            } else if (code === 'LV') {
-                eventDesc = 'Annual Leave';
-                eventTitle = '🏖️ Annual Leave';
-            } else if (code === 'LLV') {
-                eventDesc = 'Live Leave';
-                eventTitle = '🏖️ Live Leave';
-            } else if (code === 'SK') {
-                eventDesc = 'SICK';
-                eventTitle = '🤒 SICK';
             }
-            
-            if (eventTitle) {
-                allDayEvents.set(day, {
-                    isAllDay: true,
-                    title: eventTitle,
-                    description: eventDesc,
-                    location: 'Home',
-                    startTime: createDubaiUTCDate(day, 0, 1),
-                });
+            if (daysLine && codesLine) {
+                for (let i = 0; i < Math.min(daysLine.length, codesLine.length); ++i) {
+                    const day = daysLine[i];
+                    if (isNaN(day) || day < startRosterDay || day > endRosterDay) continue;
+                    const code = codesLine[i].trim();
+                    let eventTitle = null, eventDesc = null;
+                    if (code.startsWith('XX')) {
+                        eventTitle = code === 'XX' ? '🏠 Day Off' : `🏠 Day Off (${code})`;
+                        eventDesc = code === 'XX' ? 'Day Off' : `Day Off (${code})`;
+                    } else if (code === 'LV') {
+                        eventTitle = '🏖️ Annual Leave'; eventDesc = 'Annual Leave';
+                    } else if (code === 'LLV') {
+                        eventTitle = '🏖️ Live Leave'; eventDesc = 'Live Leave';
+                    } else if (code === 'SK') {
+                        eventTitle = '🤒 SICK'; eventDesc = 'SICK';
+                    }
+                    if (eventTitle) {
+                        allDayEvents.set(day, {
+                            isAllDay: true,
+                            title: eventTitle,
+                            description: eventDesc,
+                            location: 'Home',
+                            startTime: createDubaiUTCDate(day, 0, 1),
+                        });
+                    }
+                }
             }
-        }
-    }
-}
-
-            const lines = text.split('\n');
+            // --- original parsing below remains unchanged ---
+            const linesOrig = text.split('\n');
             let currentDay = null;
             let lastParentDutyReportTime = null;
             let lastFlightArrivalTime = null;
 
-            for (const line of lines) {
+            for (const line of linesOrig) {
                 const flightWithDutyCode = line.match(/^(\d{2})\s+\w{3}\s+([A-Z0-9]+)\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
                 const flightWithoutDutyCode = line.match(/^(\d{2})\s+\w{3}\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
                 const secondaryFlightMatch = line.trim().match(/^(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
@@ -417,7 +385,7 @@ if (calendarMatch) {
                     lastParentDutyReportTime = report;
                 } else if (secondaryFlightMatch && currentDay && lastParentDutyReportTime) {
                     const [_, report, flight, depSt, depTime, arrSt, arrTime, dur] = secondaryFlightMatch;
-                     if(report === lastParentDutyReportTime) {
+                    if(report === lastParentDutyReportTime) {
                         dutyInfo = { day: currentDay, reportTimeStr: lastParentDutyReportTime, flightNum: flight, depSt: depSt, depTimeStr: depTime, arrSt: arrSt, arrTimeStr: arrTime, durationStr: dur};
                     }
                 }
@@ -496,8 +464,6 @@ if (calendarMatch) {
                     }
                 }
             }
-            
-            
             const flightActivityDays = new Set();
             for (const duty of parsedDuties) {
                 flightActivityDays.add(duty.reportTime.getUTCDate());
@@ -505,10 +471,10 @@ if (calendarMatch) {
                 flightActivityDays.add(duty.arrivalTime.getUTCDate());
             }
 
-
             const finalLeaveEvents = Array.from(allDayEvents.values());
             return createEventsFromParsedData(parsedDuties, finalLeaveEvents);
         }
+        // ---------- END MODIFIED FUNCTION ----------
 
         function generateIcsFile(events) {
             events.sort((a, b) => a.startTime - b.startTime);
