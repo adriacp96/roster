@@ -375,15 +375,17 @@
             const lines = text.split('\n');
             let currentDay = null;
             let lastParentDutyReportTime = null;
+            let lastFlightArrivalTime = null;
 
             for (const line of lines) {
                 const flightWithDutyCode = line.match(/^(\d{2})\s+\w{3}\s+([A-Z0-9]+)\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
                 const flightWithoutDutyCode = line.match(/^(\d{2})\s+\w{3}\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
-                const turnaroundLegMatch = line.trim().match(/^(EK\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
+                const secondaryFlightMatch = line.trim().match(/^(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
                 const leaveMatch = line.match(/^(\d{2})\s+\w{3}\s+([A-Z0-9]+)\s+(\d{2}:\d{2})\s+(.+?)\s+(\d{2}:\d{2})$/);
                 let dutyInfo = null;
 
                 if (flightWithDutyCode) {
+                    lastFlightArrivalTime = null; 
                     currentDay = parseInt(flightWithDutyCode[1], 10);
                     const [_, _d, type, report, flight, depSt, depTime, arrSt, arrTime, dur] = flightWithDutyCode;
                     dutyInfo = { day: currentDay, reportTimeStr: report, flightNum: flight, depSt, depTimeStr: depTime, arrSt, arrTimeStr: arrTime, durationStr: dur };
@@ -393,9 +395,11 @@
                     const [_, _d, report, flight, depSt, depTime, arrSt, arrTime, dur] = flightWithoutDutyCode;
                     dutyInfo = { day: currentDay, reportTimeStr: report, flightNum: flight, depSt, depTimeStr: depTime, arrSt, arrTimeStr: arrTime, durationStr: dur };
                     lastParentDutyReportTime = report;
-                } else if (turnaroundLegMatch && currentDay && lastParentDutyReportTime) {
-                    const [_, flight, depSt, depTime, arrSt, arrTime, dur] = turnaroundLegMatch;
-                    dutyInfo = { day: currentDay, reportTimeStr: lastParentDutyReportTime, flightNum: flight, depSt, depTimeStr: depTime, arrSt, arrTimeStr: arrTime, durationStr: dur };
+                } else if (secondaryFlightMatch && currentDay && lastParentDutyReportTime) {
+                    const [_, report, flight, depSt, depTime, arrSt, arrTime, dur] = secondaryFlightMatch;
+                     if(report === lastParentDutyReportTime) {
+                        dutyInfo = { day: currentDay, reportTimeStr: lastParentDutyReportTime, flightNum: flight, depSt: depSt, depTimeStr: depTime, arrSt: arrSt, arrTimeStr: arrTime, durationStr: dur};
+                    }
                 }
                 
                 if (dutyInfo) {
@@ -416,20 +420,28 @@
                     const reportTime = createDubaiUTCDate(dutyInfo.day, reportH, reportM);
                     
                     let departureTime = createLocalUTCDate(dutyInfo.day, dutyInfo.depTimeStr);
-
-                    if (departureTime < reportTime) {
-                        const twelveHoursInMillis = 12 * 60 * 60 * 1000;
-                        if ((reportTime - departureTime) > twelveHoursInMillis) {
+                    
+                    if (lastFlightArrivalTime) {
+                         if (departureTime < lastFlightArrivalTime) {
                             departureTime.setUTCDate(departureTime.getUTCDate() + 1);
+                        }
+                    } else {
+                        if (departureTime < reportTime) {
+                            const twelveHoursInMillis = 12 * 60 * 60 * 1000;
+                            if ((reportTime - departureTime) > twelveHoursInMillis) {
+                                departureTime.setUTCDate(departureTime.getUTCDate() + 1);
+                            }
                         }
                     }
                     
                     const [durH, durM] = dutyInfo.durationStr.split(':').map(Number);
                     const durationMillis = (durH * 60 + durM) * 60 * 1000;
                     const arrivalTime = new Date(departureTime.getTime() + durationMillis);
+                    lastFlightArrivalTime = arrivalTime;
 
                     parsedDuties.push({ reportTime, departureTime, arrivalTime, flightNum: dutyInfo.flightNum, depSt: dutyInfo.depSt, arrSt: dutyInfo.arrSt, durationStr: dutyInfo.durationStr });
                 } else if (leaveMatch) {
+                    lastFlightArrivalTime = null; 
                     const day = parseInt(leaveMatch.slice(1)[0], 10);
                     if (!allDayEvents.has(day)) continue;
 
