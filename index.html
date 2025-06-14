@@ -278,11 +278,11 @@
                             const minutes = totalMinutes % 60;
                             const formattedDuration = `${hours}:${String(minutes).padStart(2, '0')}`;
                             finalEvents.push({
-                                isAllDay: true, // Layovers can be treated as all-day events for clean display
                                 title: `💼 Layover (${formattedDuration} hours)`,
                                 description: `Layover in ${airportNames[duty.arrSt] || duty.arrSt}. Total duration: ${formattedDuration} hours.`,
                                 location: duty.arrSt,
-                                startTime: layoverStart
+                                startTime: layoverStart,
+                                endTime: new Date(layoverStart.getTime() + 30 * 60 * 1000)
                             });
                         }
                     }
