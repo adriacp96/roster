@@ -230,61 +230,163 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const bookmarkletLink = document.getElementById('bookmarklet-link');
-            const magicButton = document.getElementById('magic-button');
-            const buttonIcon = document.getElementById('button-icon');
-            let isProcessed = false;
-           
-            const bookmarkletCode = `javascript:(function(){try{navigator.clipboard.writeText(document.body.innerText);alert('Roster text copied!\\n\\nNow go back to the RosterCal page and click the main button.');}catch(e){alert('Error: Could not copy text. Please try copying manually.');}})();`;
-            bookmarkletLink.href = bookmarkletCode;
-
-            magicButton.addEventListener('click', (event) => {
-                if (isProcessed) { return; }
-                event.preventDefault();
-
-                navigator.clipboard.readText().then(text => {
-                    if (!text) {
-                        alert("Clipboard is empty. Please use the 'Copy Roster' bookmarklet first.");
-                        return;
-                    }
-                   
-                    const events = parsePlainTextForRosterEvents(text);
-                    if (!events || events.length === 0) {
-                        buttonIcon.innerText = '❌';
-                        setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
-                        return;
-                    }
-                   
-                    const icsContent = generateIcsFile(events);
-                    const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                    const url = URL.createObjectURL(file);
-                   
-                    buttonIcon.innerText = '✔️';
-                    magicButton.classList.add('success');
-                    isProcessed = true;
-                    magicButton.href = url;
-                    magicButton.setAttribute('download', 'MyRoster.ics');
-
-                    setTimeout(() => {
-                        buttonIcon.style.transform = 'rotate(360deg)';
-                        buttonIcon.innerText = '⬇️';
-                    }, 1000); 
-                   
-                }).catch(err => {
-                    alert('Could not read clipboard. Please allow permission and try again.');
-                    buttonIcon.innerText = '❌';
-                    setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
-                });
-            });
-        });
-
+        // --- Zonas horarias y aeropuertos ---
         const timeZoneOffsets = { 'ABJ': 0, 'ABV': 1, 'ACC': 0, 'ADD': 3, 'ADL': 9.5, 'AKL': 12, 'ALG': 1, 'AMD': 5.5, 'AMM': 3, 'AMS': 2, 'ARN': 2, 'ATH': 3, 'ATL': -4, 'BAH': 3, 'BBI': 5.5, 'BCN': 2, 'BEY': 3, 'BGI': -4, 'BGW': 3, 'BHX': 1, 'BKK': 7, 'BLQ': 2, 'BLR': 5.5, 'BNE': 10, 'BOG': -5, 'BOM': 5.5, 'BOS': -4, 'BRU': 2, 'BSB': -3, 'BSR': 3, 'BUD': 2, 'CAI': 3, 'CAN': 8, 'CCJ': 5.5, 'CCU': 5.5, 'CDG': 2, 'CEB': 8, 'CGK': 7, 'CHC': 12, 'CKY': 0, 'CMB': 5.5, 'CMN': 1, 'COK': 5.5, 'CPH': 2, 'CPT': 2, 'CRK': 8, 'DAC': 6, 'DAR': 3, 'DEL': 5.5, 'DEN': -6, 'DFW': -5, 'DJE': 1, 'DME': 3, 'DMM': 3, 'DOH': 3, 'DPS': 8, 'DSS': 0, 'DUB': 1, 'DUR': 2, 'DUS': 2, 'DXB': 4, 'EBB': 3, 'EDI': 1, 'EWR': -4, 'EZE': -3, 'FCO': 2, 'FRA': 2, 'GIG': -3, 'GLA': 1, 'GOT': 2, 'GRU': -3, 'GVA': 2, 'GYD': 4, 'HAM': 2, 'HAN': 7, 'HBE': 3, 'HEL': 3, 'HGH': 8, 'HKG': 8, 'HKT': 7, 'HND': 9, 'HRE': 2, 'HYD': 5.5, 'IAD': -4, 'IAH': -5, 'ICN': 9, 'IKA': 3.5, 'ISB': 5, 'IST': 3, 'JED': 3, 'JFK': -4, 'JNB': 2, 'KHI': 5, 'KIX': 9, 'KRT': 2, 'KUL': 8, 'KWI': 3, 'LAD': 1, 'LAX': -7, 'LCA': 3, 'LED': 3, 'LGW': 1, 'LHE': 5, 'LHR': 1, 'LIS': 1, 'LOS': 1, 'LUN': 2, 'LYS': 2, 'MAA': 5.5, 'MAD': 2, 'MAN': 1, 'MCO': -4, 'MCT': 4, 'MED': 3, 'MEL': 10, 'MEX': -6, 'MIA': -4, 'MLA': 2, 'MLE': 5, 'MNL': 8, 'MPM': 2, 'MRU': 4, 'MUC': 2, 'MXP': 2, 'NBO': 3, 'NCE': 2, 'NCL': 1, 'NDJ': 1, 'NRT': 9, 'ORD': -5, 'OSL': 2, 'OTP': 3, 'PER': 8, 'PEW': 5, 'PNH': 7, 'PRG': 2, 'PVG': 8, 'RUH': 3, 'SAW': 3, 'SEA': -7, 'SEZ': 4, 'SFO': -7, 'SGN': 7, 'SIN': 8, 'SKT': 5, 'STN': 1, 'SZX': 8, 'SYD': 10, 'TNR': 3, 'TPE': 8, 'TLV': 3, 'TRV': 5.5, 'TUN': 1, 'VCE': 2, 'VIE': 2, 'WAW': 2, 'YYC': -6, 'YUL': -4, 'YYZ': -4, 'ZAG': 2, 'ZRH': 2 };
-        const airportNames = { 'ABJ': 'Abidjan', 'ABV': 'Abuja', 'ACC': 'Accra', 'ADD': 'Addis Ababa', 'ADL': 'Adelaide', 'AKL': 'Auckland', 'ALG': 'Algiers', 'AMD': 'Ahmedabad', 'AMM': 'Amman', 'AMS': 'Amsterdam', 'ARN': 'Stockholm', 'ATH': 'Athens', 'ATL': 'Atlanta', 'BAH': 'Bahrain', 'BBI': 'Bhubaneswar', 'BCN': 'Barcelona', 'BEY': 'Beirut', 'BGW': 'Baghdad', 'BHX': 'Birmingham', 'BKK': 'Bangkok', 'BLQ': 'Bologna', 'BLR': 'Bengaluru', 'BNE': 'Brisbane', 'BOG': 'Bogota', 'BOM': 'Mumbai', 'BOS': 'Boston', 'BRU': 'Brussels', 'BSR': 'Basra', 'BUD': 'Budapest', 'CAI': 'Cairo', 'CAN': 'Guangzhou', 'CCJ': 'Kozhikode', 'CCU': 'Kolkata', 'CDG': 'Paris', 'CEB': 'Cebu', 'CGK': 'Jakarta', 'CHC': 'Christchurch', 'CKY': 'Conakry', 'CMB': 'Colombo', 'CMN': 'Casablanca', 'COK': 'Kochi', 'CPH': 'Copenhagen', 'CPT': 'Cape Town', 'CRK': 'Clark', 'DAC': 'Dhaka', 'DAR': 'Dar es Salaam', 'DEL': 'Delhi', 'DEN': 'Denver', 'DFW': 'Dallas', 'DJE': 'Djerba', 'DME': 'Moscow', 'DMM': 'Dammam', 'DOH': 'Doha', 'DPS': 'Denpasar', 'DSS': 'Dakar', 'DUB': 'Dublin', 'DUR': 'Durban', 'DUS': 'Dusseldorf', 'DXB': 'Dubai', 'EBB': 'Entebbe', 'EDI': 'Edinburgh', 'EWR': 'Newark', 'EZE': 'Buenos Aires', 'FCO': 'Rome', 'FRA': 'Frankfurt', 'GIG': 'Rio de Janeiro', 'GLA': 'Glasgow', 'GOT': 'Gothenburg', 'GRU': 'Sao Paulo', 'GVA': 'Geneva', 'GYD': 'Baku', 'HAM': 'Hamburg', 'HAN': 'Hanoi', 'HBE': 'Alexandria', 'HEL': 'Helsinki', 'HGH': 'Hangzhou', 'HKG': 'Hong Kong', 'HKT': 'Phuket', 'HND': 'Tokyo-Haneda', 'HRE': 'Harare', 'HYD': 'Hyderabad', 'IAD': 'Washington D.C.', 'IAH': 'Houston', 'ICN': 'Seoul', 'IKA': 'Tehran', 'ISB': 'Islamabad', 'IST': 'Istanbul', 'JED': 'Jeddah', 'JFK': 'New York', 'JNB': 'Johannesburg', 'KHI': 'Karachi', 'KIX': 'Osaka', 'KRT': 'Khartoum', 'KUL': 'Kuala Lumpur', 'KWI': 'Kuwait City', 'LAD': 'Luanda', 'LAX': 'Los Angeles', 'LCA': 'Larnaca', 'LED': 'St. Petersburg', 'LGW': 'London-Gatwick', 'LHE': 'Lahore', 'LHR': 'London-Heathrow', 'LIS': 'Lisbon', 'LOS': 'Lagos', 'LUN': 'Lusaka', 'LYS': 'Lyon', 'MAA': 'Chennai', 'MAD': 'Madrid', 'MAN': 'Manchester', 'MCO': 'Orlando', 'MCT': 'Muscat', 'MED': 'Medina', 'MEL': 'Melbourne', 'MEX': 'Mexico City', 'MIA': 'Miami', 'MLA': 'Malta', 'MLE': 'Malé', 'MNL': 'Manila', 'MPM': 'Maputo', 'MRU': 'Mauritius', 'MUC': 'Munich', 'MXP': 'Milan', 'NBO': 'Nairobi', 'NCE': 'Nice', 'NCL': 'Newcastle', 'NRT': 'Tokyo-Narita', 'ORD': 'Chicago', 'OSL': 'Oslo', 'OTP': 'Bucharest', 'PER': 'Perth', 'PEW': 'Peshawar', 'PNH': 'Phnom Penh', 'PRG': 'Prague', 'PVG': 'Shanghai', 'RUH': 'Riyadh', 'SAW': 'Istanbul-Sabiha', 'SEA': 'Seattle', 'SEZ': 'Seychelles', 'SFO': 'San Francisco', 'SGN': 'Ho Chi Minh City', 'SIN': 'Singapore', 'SKT': 'Sialkot', 'STN': 'London-Stansted', 'SZX': 'Shenzhen', 'SYD': 'Sydney', 'TNR': 'Antananarivo', 'TPE': 'Taipei', 'TLV': 'Tel Aviv', 'TRV': 'Thiruvananthapuram', 'TUN': 'Tunis', 'VCE': 'Venice', 'VIE': 'Vienna', 'WAW': 'Warsaw', 'YYC': 'Calgary', 'YUL': 'Montreal', 'YYZ': 'Toronto', 'ZAG': 'Zagreb', 'ZRH': 'Zurich' };
-       
-        function createEventsFromParsedData(duties, leave) {
+        const airportNames = { 'ABJ': 'Abidjan', 'ABV': 'Abuja', 'ACC': 'Accra', 'ADD': 'Addis Ababa', 'ADL': 'Adelaide', 'AKL': 'Auckland', 'ALG': 'Algiers', 'AMD': 'Ahmedabad', 'AMM': 'Amman', 'AMS': 'Amsterdam', 'ARN': 'Stockholm', 'ATH': 'Athens', 'ATL': 'Atlanta', 'BAH': 'Bahrain', 'BBI': 'Bhubaneswar', 'BCN': 'Barcelona', 'BEY': 'Beirut', 'BGW': 'Baghdad', 'BHX': 'Birmingham', 'BKK': 'Bangkok', 'BLQ': 'Bologna', 'BLR': 'Bengaluru', 'BNE': 'Brisbane', 'BOG': 'Bogota', 'BOM': 'Mumbai', 'BOS': 'Boston', 'BRU': 'Brussels', 'BSR': 'Basra', 'BUD': 'Budapest', 'CAI': 'Cairo', 'CAN': 'Guangzhou', 'CCJ': 'Kozhikode', 'CCU': 'Kolkata', 'CDG': 'Paris', 'CEB': 'Cebu', 'CGK': 'Jakarta', 'CHC': 'Christchurch', 'CKY': 'Conakry', 'CMB': 'Colombo', 'CMN': 'Casablanca', 'COK': 'Kochi', 'CPH': 'Copenhagen', 'CPT': 'Cape Town', 'CRK': 'Clark', 'DAC': 'Dhaka', 'DAR': 'Dar es Salaam', 'DEL': 'Delhi', 'DEN': 'Denver', 'DFW': 'Dallas', 'DJE': 'Djerba', 'DME': 'Moscow', 'DMM': 'Dammam', 'DOH': 'Doha', 'DPS': 'Denpasar', 'DSS': 'Dakar', 'DUB': 'Dublin', 'DUR': 'Durban', 'DUS': 'Dusseldorf', 'DXB': 'Dubai', 'EBB': 'Entebbe', 'EDI': 'Edinburgh', 'EWR': 'Newark', 'EZE': 'Buenos Aires', 'FCO': 'Rome', 'FRA': 'Frankfurt', 'GIG': 'Rio de Janeiro', 'GLA': 'Glasgow', 'GOT': 'Gothenburg', 'GRU': 'Sao Paulo', 'GVA': 'Geneva', 'GYD': 'Baku', 'HAM': 'Hamburg', 'HAN': 'Hanoi', 'HBE': 'Alexandria', 'HEL': 'Helsinki', 'HGH': 'Hangzhou', 'HKG': 'Hong Kong', 'HKT': 'Phuket', 'HND': 'Tokyo-Haneda', 'HRE': 'Harare', 'HYD': 'Hyderabad', 'IAD': 'Washington D.C.', 'IAH': 'Houston', 'ICN': 'Seoul', 'IKA': 'Tehran', 'ISB': 'Islamabad', 'IST': 'Istanbul', 'JED': 'Jeddah', 'JFK': 'New York', 'JNB': 'Johannesburg', 'KHI': 'Karachi', 'KIX': 'Osaka', 'KRT': 'Khartoum', 'KUL': 'Kuala Lumpur', 'KWI': 'Kuwait City', 'LAD': 'Luanda', 'LAX': 'Los Angeles', 'LCA': 'Larnaca', 'LED': 'St. Petersburg', 'LGW': 'London-Gatwick', 'LHE': 'Lahore', 'LHR': 'London-Heathrow', 'LIS': 'Lisbon', 'LOS': 'Lagos', 'LUN': 'Lusaka', 'LYS': 'Lyon', 'MAA': 'Chennai', 'MAD': 'Madrid', 'MAN': 'Manchester', 'MCO': 'Orlando', 'MCT': 'Muscat', 'MED': 'Medina', 'MEL': 'Melbourne', 'MEX': 'Mexico City', 'MIA': 'Miami', 'MLA': 'Malta', 'MLE': 'Malé', 'MNL': 'Manila', 'MPM': 'Maputo', 'MRU': 'Mauritius', 'MUC': 'Munich', 'MXP': 'Milan', 'NBO': 'Nairobi', 'NCE': 'Nice', 'NCL': 'Newcastle', 'NRT': 'Tokyo-Narita', 'ORD': 'Chicago', 'OSL': 'Oslo', 'OTP': 'Bucharest', 'PER': 'Perth', 'PEW': 'Peshawar', 'PNH': 'Phnom Penh', 'PRG': 'Prague', 'PVG': 'Shanghai', 'RUH': 'Riyadh', 'SAW': 'Istanbul-Sabiha', 'SEA': 'Seattle', 'SEZ': 'Seychelles', 'SFO': 'San Francisco', 'SGN': 'Ho Chi Minh City', 'SIN': 'Singapore', 'SKT': 'Sialkot', 'STN': 'London-Stansted', 'SZX': 'Shenzhen', 'SYD': 'Sydney', 'TNR': 'Antananarivo', 'TPE': 'Taipei', 'TLV': 'Tel Aviv', 'TRV': 'Thiruvananthapuram', 'TUN': 'Tunis', 'VCE': 'Venice', 'VIE': 'Vienna', 'WAW': 'Warsaw', 'YYC': -6, 'YUL': -4, 'YYZ': -4, 'ZAG': 2, 'ZRH': 2 };
+
+        function createDubaiUTCDate(day, h, m, month, year) {
+            const offset = timeZoneOffsets['DXB'];
+            let dt = new Date(Date.UTC(year, month - 1, day, h, m));
+            dt.setUTCHours(dt.getUTCHours() - offset);
+            return dt;
+        }
+
+        function getAllDayEventsFromCodes(daysLine, codesLine, month, year) {
+            const allDayEvents = [];
+            for (let i = 0; i < Math.min(daysLine.length, codesLine.length); ++i) {
+                const day = daysLine[i];
+                const code = codesLine[i].trim();
+                let eventTitle = null, eventDesc = null;
+                if (/^XX(V|\d*)?$/.test(code)) {
+                    eventTitle = '🏠 Day Off';
+                    eventDesc = 'Day Off';
+                } else if (/^LV$/.test(code)) {
+                    eventTitle = '🏖️ Annual Leave'; eventDesc = 'Annual Leave';
+                } else if (/^LLV$/.test(code)) {
+                    eventTitle = '🏖️ Live Leave'; eventDesc = 'Live Leave';
+                } else if (/^SK(\d*)?$/.test(code)) {
+                    eventTitle = '🤒 SICK'; eventDesc = 'SICK';
+                }
+                if (eventTitle) {
+                    allDayEvents.push({
+                        isAllDay: true,
+                        title: eventTitle,
+                        description: eventDesc,
+                        location: 'Home',
+                        startTime: createDubaiUTCDate(day, 0, 0, month, year)
+                    });
+                }
+            }
+            return allDayEvents;
+        }
+
+        function parsePlainTextForRosterEvents(text) {
+            const parsedDuties = [];
+            let allDayEvents = [];
+
+            let dateRangeMatch = text.match(/(\d{1,2})-(\d{1,2})-(\d{4})\s+to\s+(\d{1,2})-(\d{1,2})-(\d{4})/);
+            let startRosterDay, endRosterDay, month, year;
+            if (dateRangeMatch) {
+                startRosterDay = parseInt(dateRangeMatch[1], 10);
+                month = parseInt(dateRangeMatch[2], 10);
+                year = parseInt(dateRangeMatch[3], 10);
+                endRosterDay = parseInt(dateRangeMatch[4], 10);
+            } else {
+                dateRangeMatch = text.match(/(\d{1,2})-(\d{1,2})-(\d{4})\s+to/);
+                if (!dateRangeMatch) {
+                    alert("Error: Could not determine the roster's date range.");
+                    return [];
+                }
+                month = parseInt(dateRangeMatch[2], 10);
+                year = parseInt(dateRangeMatch[3], 10);
+                startRosterDay = 1;
+                endRosterDay = new Date(year, month, 0).getDate();
+            }
+
+            // Busca la línea de días y la línea de códigos
+            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+            let daysLine = null, codesLine = null;
+            for (let i = 0; i < lines.length - 1; ++i) {
+                if (/^\d+(\s+\d+)*$/.test(lines[i]) && /^[A-Z0-9]{2,}(\s+[A-Z0-9]{2,})*$/.test(lines[i+1])) {
+                    daysLine = lines[i].split(/\s+/).map(Number);
+                    codesLine = lines[i+1].split(/\s+/);
+                    break;
+                }
+            }
+            if (daysLine && codesLine) {
+                allDayEvents = getAllDayEventsFromCodes(daysLine, codesLine, month, year);
+            }
+
+            // --- Parseo de vuelos ---
+            const linesOrig = text.split('\n');
+            let currentDay = null;
+            let lastParentDutyReportTime = null;
+            let lastFlightArrivalTime = null;
+
+            for (const line of linesOrig) {
+                const flightWithDutyCode = line.match(/^(\d{2})\s+\w{3}\s+([A-Z0-9]+)\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
+                const flightWithoutDutyCode = line.match(/^(\d{2})\s+\w{3}\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
+                const secondaryFlightMatch = line.trim().match(/^(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
+                let dutyInfo = null;
+
+                if (flightWithDutyCode) {
+                    lastFlightArrivalTime = null; 
+                    currentDay = parseInt(flightWithDutyCode[1], 10);
+                    const [_, _d, type, report, flight, depSt, depTime, arrSt, arrTime, dur] = flightWithDutyCode;
+                    dutyInfo = { day: currentDay, reportTimeStr: report, flightNum: flight, depSt, depTimeStr: depTime, arrSt, arrTimeStr: arrTime, durationStr: dur };
+                    lastParentDutyReportTime = report;
+                } else if (flightWithoutDutyCode) {
+                    currentDay = parseInt(flightWithoutDutyCode[1], 10);
+                    const [_, _d, report, flight, depSt, depTime, arrSt, arrTime, dur] = flightWithoutDutyCode;
+                    dutyInfo = { day: currentDay, reportTimeStr: report, flightNum: flight, depSt, depTimeStr: depTime, arrSt, arrTimeStr: arrTime, durationStr: dur };
+                    lastParentDutyReportTime = report;
+                } else if (secondaryFlightMatch && currentDay && lastParentDutyReportTime) {
+                    const [_, report, flight, depSt, depTime, arrSt, arrTime, dur] = secondaryFlightMatch;
+                    if(report === lastParentDutyReportTime) {
+                        dutyInfo = { day: currentDay, reportTimeStr: lastParentDutyReportTime, flightNum: flight, depSt: depSt, depTimeStr: depTime, arrSt: arrSt, arrTimeStr: arrTime, durationStr: dur};
+                    }
+                }
+                
+                if (dutyInfo) {
+                    const localOffset = timeZoneOffsets[dutyInfo.depSt];
+                    if (localOffset === undefined) {
+                        alert(`Error: Timezone not found for ${dutyInfo.depSt}.`);
+                        continue;
+                    }
+                    
+                    const createLocalUTCDate = (day, timeStr) => {
+                        const [h, m] = timeStr.split(':').map(Number);
+                        let dt = new Date(Date.UTC(year, month - 1, day, h, m));
+                        dt.setUTCHours(dt.getUTCHours() - localOffset);
+                        return dt;
+                    };
+
+                    const [reportH, reportM] = dutyInfo.reportTimeStr.split(':').map(Number);
+                    const reportTime = createDubaiUTCDate(dutyInfo.day, reportH, reportM, month, year);
+                    
+                    let departureTime = createLocalUTCDate(dutyInfo.day, dutyInfo.depTimeStr);
+                    
+                    if (lastFlightArrivalTime) {
+                         if (departureTime < lastFlightArrivalTime) {
+                            departureTime.setUTCDate(departureTime.getUTCDate() + 1);
+                        }
+                    } else {
+                        if (departureTime < reportTime) {
+                            const twelveHoursInMillis = 12 * 60 * 60 * 1000;
+                            if ((reportTime - departureTime) > twelveHoursInMillis) {
+                                departureTime.setUTCDate(departureTime.getUTCDate() + 1);
+                            }
+                        }
+                    }
+                    
+                    const [durH, durM] = dutyInfo.durationStr.split(':').map(Number);
+                    const durationMillis = (durH * 60 + durM) * 60 * 1000;
+                    const arrivalTime = new Date(departureTime.getTime() + durationMillis);
+                    lastFlightArrivalTime = arrivalTime;
+
+                    parsedDuties.push({ reportTime, departureTime, arrivalTime, flightNum: dutyInfo.flightNum, depSt: dutyInfo.depSt, arrSt: dutyInfo.arrSt, durationStr: dutyInfo.durationStr });
+                }
+            }
+
+            // Genera eventos de vuelos
+            const flightEvents = createEventsFromParsedData(parsedDuties);
+
+            // Devuelve vuelos + all-day SIEMPRE
+            return [...flightEvents, ...allDayEvents];
+        }
+
+        function createEventsFromParsedData(duties) {
             const finalEvents = [];
-            leave.forEach(l => finalEvents.push(l));
             const sortedDuties = duties.sort((a, b) => a.reportTime - b.reportTime);
             sortedDuties.forEach((duty, index) => {
                 const depName = airportNames[duty.depSt] || duty.depSt;
@@ -329,186 +431,6 @@
                 }
             });
             return finalEvents;
-        }
-
-        function parsePlainTextForRosterEvents(text) {
-            const parsedDuties = [];
-            const allDayEvents = new Map();
-
-            let dateRangeMatch = text.match(/(\d{1,2})-(\d{1,2})-(\d{4})\s+to\s+(\d{1,2})-(\d{1,2})-(\d{4})/);
-            let startRosterDay, endRosterDay, month, year;
-            if (dateRangeMatch) {
-                startRosterDay = parseInt(dateRangeMatch[1], 10);
-                month = parseInt(dateRangeMatch[2], 10);
-                year = parseInt(dateRangeMatch[3], 10);
-                endRosterDay = parseInt(dateRangeMatch[4], 10);
-            } else {
-                dateRangeMatch = text.match(/(\d{1,2})-(\d{1,2})-(\d{4})\s+to/);
-                if (!dateRangeMatch) {
-                    alert("Error: Could not determine the roster's date range.");
-                    return [];
-                }
-                month = parseInt(dateRangeMatch[2], 10);
-                year = parseInt(dateRangeMatch[3], 10);
-                startRosterDay = 1;
-                endRosterDay = new Date(year, month, 0).getDate();
-            }
-            const createDubaiUTCDate = (day, h, m) => {
-                const offset = timeZoneOffsets['DXB'];
-                let dt = new Date(Date.UTC(year, month - 1, day, h, m));
-                dt.setUTCHours(dt.getUTCHours() - offset);
-                return dt;
-            };
-
-            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-            let daysLine = null, codesLine = null;
-            for (let i = 0; i < lines.length - 1; ++i) {
-                if (/^\d+(\s+\d+)*$/.test(lines[i]) && /^[A-Z0-9]{2,}(\s+[A-Z0-9]{2,})*$/.test(lines[i+1])) {
-                    daysLine = lines[i].split(/\s+/).map(Number);
-                    codesLine = lines[i+1].split(/\s+/);
-                    break;
-                }
-            }
-            if (daysLine && codesLine) {
-                for (let i = 0; i < Math.min(daysLine.length, codesLine.length); ++i) {
-                    const day = daysLine[i];
-                    if (isNaN(day) || day < startRosterDay || day > endRosterDay) continue;
-                    const code = codesLine[i].trim();
-                    let eventTitle = null, eventDesc = null;
-                    if (code.startsWith('XX')) {
-                        eventTitle = code === 'XX' ? '🏠 Day Off' : `🏠 Day Off (${code})`;
-                        eventDesc = code === 'XX' ? 'Day Off' : `Day Off (${code})`;
-                    } else if (code === 'LV') {
-                        eventTitle = '🏖️ Annual Leave'; eventDesc = 'Annual Leave';
-                    } else if (code === 'LLV') {
-                        eventTitle = '🏖️ Live Leave'; eventDesc = 'Live Leave';
-                    } else if (code === 'SK') {
-                        eventTitle = '🤒 SICK'; eventDesc = 'SICK';
-                    }
-                    if (eventTitle) {
-                        allDayEvents.set(day, {
-                            isAllDay: true,
-                            title: eventTitle,
-                            description: eventDesc,
-                            location: 'Home',
-                            startTime: createDubaiUTCDate(day, 0, 1),
-                        });
-                    }
-                }
-            }
-            const linesOrig = text.split('\n');
-            let currentDay = null;
-            let lastParentDutyReportTime = null;
-            let lastFlightArrivalTime = null;
-
-            for (const line of linesOrig) {
-                const flightWithDutyCode = line.match(/^(\d{2})\s+\w{3}\s+([A-Z0-9]+)\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
-                const flightWithoutDutyCode = line.match(/^(\d{2})\s+\w{3}\s+(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
-                const secondaryFlightMatch = line.trim().match(/^(\d{2}:\d{2})\s+(\w+)\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+([A-Z]{3})\s+(\d{2}:\d{2})\s+(\d{2}:\d{2})/);
-                const leaveMatch = line.match(/^(\d{2})\s+\w{3}\s+([A-Z0-9]+)\s+(\d{2}:\d{2})\s+(.+?)\s+(\d{2}:\d{2})$/);
-                let dutyInfo = null;
-
-                if (flightWithDutyCode) {
-                    lastFlightArrivalTime = null; 
-                    currentDay = parseInt(flightWithDutyCode[1], 10);
-                    const [_, _d, type, report, flight, depSt, depTime, arrSt, arrTime, dur] = flightWithDutyCode;
-                    dutyInfo = { day: currentDay, reportTimeStr: report, flightNum: flight, depSt, depTimeStr: depTime, arrSt, arrTimeStr: arrTime, durationStr: dur };
-                    lastParentDutyReportTime = report;
-                } else if (flightWithoutDutyCode) {
-                    currentDay = parseInt(flightWithoutDutyCode[1], 10);
-                    const [_, _d, report, flight, depSt, depTime, arrSt, arrTime, dur] = flightWithoutDutyCode;
-                    dutyInfo = { day: currentDay, reportTimeStr: report, flightNum: flight, depSt, depTimeStr: depTime, arrSt, arrTimeStr: arrTime, durationStr: dur };
-                    lastParentDutyReportTime = report;
-                } else if (secondaryFlightMatch && currentDay && lastParentDutyReportTime) {
-                    const [_, report, flight, depSt, depTime, arrSt, arrTime, dur] = secondaryFlightMatch;
-                    if(report === lastParentDutyReportTime) {
-                        dutyInfo = { day: currentDay, reportTimeStr: lastParentDutyReportTime, flightNum: flight, depSt: depSt, depTimeStr: depTime, arrSt: arrSt, arrTimeStr: arrTime, durationStr: dur};
-                    }
-                }
-                
-                if (dutyInfo) {
-                    const localOffset = timeZoneOffsets[dutyInfo.depSt];
-                    if (localOffset === undefined) {
-                        alert(`Error: Timezone not found for ${dutyInfo.depSt}.`);
-                        continue;
-                    }
-                    
-                    const createLocalUTCDate = (day, timeStr) => {
-                        const [h, m] = timeStr.split(':').map(Number);
-                        let dt = new Date(Date.UTC(year, month - 1, day, h, m));
-                        dt.setUTCHours(dt.getUTCHours() - localOffset);
-                        return dt;
-                    };
-
-                    const [reportH, reportM] = dutyInfo.reportTimeStr.split(':').map(Number);
-                    const reportTime = createDubaiUTCDate(dutyInfo.day, reportH, reportM);
-                    
-                    let departureTime = createLocalUTCDate(dutyInfo.day, dutyInfo.depTimeStr);
-                    
-                    if (lastFlightArrivalTime) {
-                         if (departureTime < lastFlightArrivalTime) {
-                            departureTime.setUTCDate(departureTime.getUTCDate() + 1);
-                        }
-                    } else {
-                        if (departureTime < reportTime) {
-                            const twelveHoursInMillis = 12 * 60 * 60 * 1000;
-                            if ((reportTime - departureTime) > twelveHoursInMillis) {
-                                departureTime.setUTCDate(departureTime.getUTCDate() + 1);
-                            }
-                        }
-                    }
-                    
-                    const [durH, durM] = dutyInfo.durationStr.split(':').map(Number);
-                    const durationMillis = (durH * 60 + durM) * 60 * 1000;
-                    const arrivalTime = new Date(departureTime.getTime() + durationMillis);
-                    lastFlightArrivalTime = arrivalTime;
-
-                    parsedDuties.push({ reportTime, departureTime, arrivalTime, flightNum: dutyInfo.flightNum, depSt: dutyInfo.depSt, arrSt: dutyInfo.arrSt, durationStr: dutyInfo.durationStr });
-                } else if (leaveMatch) {
-                    lastFlightArrivalTime = null; 
-                    const day = parseInt(leaveMatch.slice(1)[0], 10);
-                    if (!allDayEvents.has(day)) continue;
-
-                    const [dayStr, type, startTimeStr, desc, endTimeStr] = leaveMatch.slice(1);
-                    const descLower = desc.trim().toLowerCase();
-                    let isAllDay = !(type.startsWith('C') || descLower.includes('sby'));
-
-                    if (isAllDay) {
-                        let title, description;
-                        if (descLower.includes('annual leave')) { title = '🏖️ Annual Leave'; description = 'Annual Leave'; } 
-                        else if (descLower.includes('live leave')) { title = '🏖️ Live Leave'; description = 'Live Leave'; } 
-                        else if (descLower.includes('day off')) { const reason = descLower.replace('day off', '').trim(); title = `🏠 Day Off${reason ? ` (${reason.toUpperCase()})` : ''}`; description = `Day Off${reason ? ` (${reason.toUpperCase()})` : ''}`; }
-                        else if (descLower === 'sick') { title = '🤒 SICK'; description = 'SICK'; }
-                        else { title = '🏠 No Scheduled Duty'; description = 'No Scheduled Duty'; }
-                        allDayEvents.get(day).title = title;
-                        allDayEvents.get(day).description = description;
-                    } else {
-                        const [startH, startM] = startTimeStr.split(':').map(Number);
-                        const [endH, endM] = endTimeStr.split(':').map(Number);
-                        const startTime = createDubaiUTCDate(day, startH, startM);
-                        let endTimeDate = createDubaiUTCDate(day, endH, endM);
-                        if (endTimeDate < startTime) { endTimeDate.setDate(endTimeDate.getDate() + 1); }
-                        
-                        allDayEvents.set(day, {
-                            title: type.startsWith('C') ? `📖 ${type}` : `📡 ${desc.trim()} (${startTimeStr}-${endTimeStr})`,
-                            description: desc.trim(),
-                            location: "Home",
-                            startTime: startTime,
-                            endTime: endTimeDate,
-                            isAllDay: false
-                        });
-                    }
-                }
-            }
-            const flightActivityDays = new Set();
-            for (const duty of parsedDuties) {
-                flightActivityDays.add(duty.reportTime.getUTCDate());
-                flightActivityDays.add(duty.departureTime.getUTCDate());
-                flightActivityDays.add(duty.arrivalTime.getUTCDate());
-            }
-
-            const finalLeaveEvents = Array.from(allDayEvents.values());
-            return createEventsFromParsedData(parsedDuties, finalLeaveEvents);
         }
 
         function generateIcsFile(events) {
@@ -558,6 +480,55 @@
             icsString += 'END:VCALENDAR';
             return icsString;
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const bookmarkletLink = document.getElementById('bookmarklet-link');
+            const magicButton = document.getElementById('magic-button');
+            const buttonIcon = document.getElementById('button-icon');
+            let isProcessed = false;
+           
+            const bookmarkletCode = `javascript:(function(){try{navigator.clipboard.writeText(document.body.innerText);alert('Roster text copied!\\n\\nNow go back to the RosterCal page and click the main button.');}catch(e){alert('Error: Could not copy text. Please try copying manually.');}})();`;
+            bookmarkletLink.href = bookmarkletCode;
+
+            magicButton.addEventListener('click', (event) => {
+                if (isProcessed) { return; }
+                event.preventDefault();
+
+                navigator.clipboard.readText().then(text => {
+                    if (!text) {
+                        alert("Clipboard is empty. Please use the 'Copy Roster' bookmarklet first.");
+                        return;
+                    }
+                   
+                    const events = parsePlainTextForRosterEvents(text);
+                    if (!events || events.length === 0) {
+                        buttonIcon.innerText = '❌';
+                        setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
+                        return;
+                    }
+                   
+                    const icsContent = generateIcsFile(events);
+                    const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                    const url = URL.createObjectURL(file);
+                   
+                    buttonIcon.innerText = '✔️';
+                    magicButton.classList.add('success');
+                    isProcessed = true;
+                    magicButton.href = url;
+                    magicButton.setAttribute('download', 'MyRoster.ics');
+
+                    setTimeout(() => {
+                        buttonIcon.style.transform = 'rotate(360deg)';
+                        buttonIcon.innerText = '⬇️';
+                    }, 1000); 
+                   
+                }).catch(err => {
+                    alert('Could not read clipboard. Please allow permission and try again.');
+                    buttonIcon.innerText = '❌';
+                    setTimeout(() => { buttonIcon.innerText = '📋'; }, 2000);
+                });
+            });
+        });
     </script>
 <div class="beta-badge">BETA</div>
 </body>
