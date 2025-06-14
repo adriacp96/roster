@@ -156,6 +156,14 @@
         .magic-button:hover { transform: scale(1.1); }
         .magic-button .icon { font-size: 2.5rem; line-height: 1; transition: transform 0.3s ease-in-out; }
         .magic-button.success { background-color: var(--green); }
+        footer {
+            padding: 18px 30px 18px 30px;
+            background: var(--color-details-bg);
+            color: var(--color-text-secondary);
+            font-size: 0.95rem;
+            text-align: center;
+            border-top: 1px solid var(--color-border);
+        }
     </style>
 </head>
 <body>
@@ -187,6 +195,10 @@
                 </a>
             </div>
         </main>
+        <footer>
+            <p>&copy; 2025 Your Company Name. All rights reserved.</p>
+            <p><small>This site is not affiliated with Emirates or any of its subsidiaries.</small></p>
+        </footer>
     </div>
 
     <script>
@@ -291,12 +303,10 @@
             return finalEvents;
         }
 
-        // ---------- MODIFIED FUNCTION: Robust XX detection (rest untouched) ----------
         function parsePlainTextForRosterEvents(text) {
             const parsedDuties = [];
             const allDayEvents = new Map();
 
-            // Roster period (date range)
             let dateRangeMatch = text.match(/(\d{1,2})-(\d{1,2})-(\d{4})\s+to\s+(\d{1,2})-(\d{1,2})-(\d{4})/);
             let startRosterDay, endRosterDay, month, year;
             if (dateRangeMatch) {
@@ -322,7 +332,6 @@
                 return dt;
             };
 
-            // Robust XX/AllDay detection: Find days/code lines anywhere
             const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
             let daysLine = null, codesLine = null;
             for (let i = 0; i < lines.length - 1; ++i) {
@@ -359,7 +368,6 @@
                     }
                 }
             }
-            // --- original parsing below remains unchanged ---
             const linesOrig = text.split('\n');
             let currentDay = null;
             let lastParentDutyReportTime = null;
@@ -474,7 +482,6 @@
             const finalLeaveEvents = Array.from(allDayEvents.values());
             return createEventsFromParsedData(parsedDuties, finalLeaveEvents);
         }
-        // ---------- END MODIFIED FUNCTION ----------
 
         function generateIcsFile(events) {
             events.sort((a, b) => a.startTime - b.startTime);
